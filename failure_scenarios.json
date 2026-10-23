@@ -1,0 +1,786 @@
+{
+  "meta": {
+    "name": "RESQNET Failure Scenarios",
+    "version": "2.0",
+    "supersedes": "1.0",
+    "contract_version": "1.0",
+    "linked_files": [
+      "disaster_scenarios.json",
+      "drone_config.json"
+    ],
+    "coordinate_system": "origin top-left; x = column 0-19 (left to right); y = row 0-19 (top to bottom); cell label = column letter A-T + row number 1-20 (x=1,y=3 -> B4)",
+    "units": {
+      "time": "seconds from mission start",
+      "mission_duration_s": 600,
+      "tick_s": 2,
+      "delay": "milliseconds",
+      "loss": "percent of packets"
+    },
+    "modes": [
+      "centralized",
+      "decentralized",
+      "hybrid"
+    ],
+    "drone_ids": [
+      "D1",
+      "D2",
+      "D3",
+      "D4",
+      "D5",
+      "D6"
+    ],
+    "message_types": [
+      "heartbeat",
+      "task_assignment",
+      "task_claim",
+      "position_update",
+      "status_report",
+      "state_sync"
+    ],
+    "event_types": {
+      "controller_outage": "Central controller unavailable between start_s and end_s",
+      "drone_unresponsive": "A drone stops responding (status disconnected); end_s null means it never returns",
+      "network_partition": "Drones split into groups; only the group with has_controller_link reaches the controller; connectivity returns at end_s",
+      "packet_loss": "Messages dropped for the stated scope",
+      "message_delay": "Extra latency, jitter, reordering and duplicates",
+      "battery_override": "Replace initial battery of listed drones at start",
+      "no_fly_activation": "Cells become restricted at start_s (cells_by_scenario)"
+    },
+    "event_status_values": [
+      "scheduled",
+      "active",
+      "recovering",
+      "resolved"
+    ],
+    "recovery_model": "After a fault ends, wait reconnect_delay_s, then resync_time_s to reconcile task state; total_recovery_s is the sum.",
+    "baseline_network_note": "Baseline packet loss, latency and reliability per map are in disaster_scenarios.json communication.conditions.",
+    "heartbeat": {
+      "interval_s": 2,
+      "timeout_s": 6,
+      "missed_before_failover": 3
+    },
+    "fairness_rule": "For one run_id, all three modes use the same map, tasks, starting positions and failure schedule. Seeds are recorded; report results even when hybrid performs worse.",
+    "synthetic_data_notice": "All values are initial test parameters, not real-world operating specifications."
+  },
+  "failure_scenarios": [
+    {
+      "failure_scenario_id": "normal_operation",
+      "title": "Normal Operation",
+      "description": "No injected failures; baseline coordination.",
+      "tests": "Baseline task allocation and coverage",
+      "seed_offset": 0,
+      "expected_checks": [
+        "All tasks allocated without duplicates",
+        "Coverage reaches a stable baseline"
+      ],
+      "events": []
+    },
+    {
+      "failure_scenario_id": "controller_failure",
+      "title": "Controller Failure",
+      "description": "Central controller becomes unavailable and later returns.",
+      "tests": "Whether local recovery resumes useful progress",
+      "seed_offset": 1,
+      "expected_checks": [
+        "Drones keep making progress during the outage",
+        "Task state is reconciled after the controller returns"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "controller_outage",
+          "start_s": 120,
+          "end_s": 300,
+          "target": "central_controller",
+          "severity": "full",
+          "cause": "power_failure",
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 6,
+            "resync_time_s": 8,
+            "total_recovery_s": 14,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 180
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "drone_failure",
+      "title": "Drone Failure",
+      "description": "Drone D3 stops responding and does not come back.",
+      "tests": "Whether abandoned tasks are recovered",
+      "seed_offset": 2,
+      "expected_checks": [
+        "Tasks owned by D3 are detected as abandoned",
+        "Another drone takes them over"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "drone_unresponsive",
+          "start_s": 150,
+          "end_s": null,
+          "drone_id": "D3",
+          "recovers": false,
+          "cause": "hardware_fault",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "network_partition",
+      "title": "Network Partition",
+      "description": "Drones split into two groups; only group A reaches the controller.",
+      "tests": "Whether conflicting or stale task claims are handled",
+      "seed_offset": 3,
+      "expected_checks": [
+        "No task is worked by two drones after the partition heals",
+        "Stale claims are detected"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "network_partition",
+          "start_s": 180,
+          "end_s": 330,
+          "cause": "interference",
+          "groups": [
+            {
+              "group_id": "A",
+              "drone_ids": [
+                "D1",
+                "D2",
+                "D3"
+              ],
+              "has_controller_link": true
+            },
+            {
+              "group_id": "B",
+              "drone_ids": [
+                "D4",
+                "D5",
+                "D6"
+              ],
+              "has_controller_link": false
+            }
+          ],
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 8,
+            "resync_time_s": 12,
+            "total_recovery_s": 20,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 150
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "reconnection",
+      "title": "Reconnection",
+      "description": "Long three-way partition that forces diverging task claims before connectivity returns.",
+      "tests": "Whether task states converge and the dashboard updates",
+      "seed_offset": 4,
+      "expected_checks": [
+        "Task state converges after reconnection",
+        "Duplicate or conflicting ownership is flagged and resolved",
+        "Dashboard shows the reconciliation"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "network_partition",
+          "start_s": 120,
+          "end_s": 360,
+          "cause": "interference",
+          "groups": [
+            {
+              "group_id": "A",
+              "drone_ids": [
+                "D1",
+                "D2"
+              ],
+              "has_controller_link": true
+            },
+            {
+              "group_id": "B",
+              "drone_ids": [
+                "D3",
+                "D4"
+              ],
+              "has_controller_link": false
+            },
+            {
+              "group_id": "C",
+              "drone_ids": [
+                "D5",
+                "D6"
+              ],
+              "has_controller_link": false
+            }
+          ],
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 8,
+            "resync_time_s": 12,
+            "total_recovery_s": 20,
+            "state_sync": "delta"
+          },
+          "reconciliation_check": {
+            "expect_conflicting_claims": true,
+            "convergence_deadline_s_after_reconnect": 30
+          },
+          "status": "scheduled",
+          "duration_s": 240
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "multiple_failures",
+      "title": "Multiple Failures",
+      "description": "Overlapping controller outage, drone failure, packet loss, delay and partition.",
+      "tests": "Limits of the recovery design",
+      "seed_offset": 5,
+      "expected_checks": [
+        "System degrades gracefully",
+        "Failures to recover are reported honestly in the results"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "controller_outage",
+          "start_s": 100,
+          "end_s": 260,
+          "target": "central_controller",
+          "severity": "full",
+          "cause": "power_failure",
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 6,
+            "resync_time_s": 8,
+            "total_recovery_s": 14,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 160
+        },
+        {
+          "id": "E02",
+          "type": "drone_unresponsive",
+          "start_s": 140,
+          "end_s": null,
+          "drone_id": "D2",
+          "recovers": false,
+          "cause": "hardware_fault",
+          "status": "scheduled"
+        },
+        {
+          "id": "E03",
+          "type": "packet_loss",
+          "start_s": 180,
+          "end_s": 300,
+          "scope": "drones",
+          "drone_ids": [
+            "D4",
+            "D5"
+          ],
+          "loss_pct": 35,
+          "pattern": "burst",
+          "burst_len_packets": 4,
+          "affected_message_types": [
+            "heartbeat",
+            "task_assignment",
+            "task_claim",
+            "position_update",
+            "status_report",
+            "state_sync"
+          ],
+          "status": "scheduled",
+          "duration_s": 120
+        },
+        {
+          "id": "E04",
+          "type": "message_delay",
+          "start_s": 200,
+          "end_s": 320,
+          "scope": "global",
+          "base_delay_ms": 1500,
+          "jitter_ms": 600,
+          "max_delay_ms": 4000,
+          "reorder_probability": 0.05,
+          "duplicate_probability": 0.02,
+          "affected_message_types": [
+            "heartbeat",
+            "task_assignment",
+            "task_claim",
+            "position_update",
+            "status_report",
+            "state_sync"
+          ],
+          "status": "scheduled",
+          "duration_s": 120
+        },
+        {
+          "id": "E05",
+          "type": "network_partition",
+          "start_s": 280,
+          "end_s": 420,
+          "cause": "interference",
+          "groups": [
+            {
+              "group_id": "A",
+              "drone_ids": [
+                "D1",
+                "D2",
+                "D3",
+                "D4"
+              ],
+              "has_controller_link": true
+            },
+            {
+              "group_id": "B",
+              "drone_ids": [
+                "D5",
+                "D6"
+              ],
+              "has_controller_link": false
+            }
+          ],
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 8,
+            "resync_time_s": 12,
+            "total_recovery_s": 20,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 140
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "no_fly_battery",
+      "title": "No Fly Battery",
+      "description": "Low starting batteries on some drones and a new no-fly area appearing mid-mission.",
+      "tests": "Whether simulated safety rules are respected",
+      "seed_offset": 6,
+      "expected_checks": [
+        "No drone enters restricted cells",
+        "Low-battery drones return before reaching the critical level",
+        "Routes avoid the newly activated no-fly cells"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "battery_override",
+          "start_s": 0,
+          "end_s": null,
+          "overrides": [
+            {
+              "drone_id": "D2",
+              "battery_pct": 45
+            },
+            {
+              "drone_id": "D4",
+              "battery_pct": 60
+            },
+            {
+              "drone_id": "D5",
+              "battery_pct": 38
+            }
+          ],
+          "status": "scheduled"
+        },
+        {
+          "id": "E02",
+          "type": "no_fly_activation",
+          "start_s": 200,
+          "end_s": null,
+          "cells_by_scenario": {
+            "earthquake": [
+              [9, 2],
+              [9, 3],
+              [10, 2],
+              [10, 3]
+            ],
+            "cyclone": [
+              [14, 9],
+              [14, 10],
+              [15, 9],
+              [15, 10]
+            ],
+            "flood": [
+              [9, 3],
+              [9, 4],
+              [10, 3],
+              [10, 4]
+            ]
+          },
+          "reason": "secondary_hazard_reported",
+          "status": "scheduled"
+        }
+      ]
+    },
+    {
+      "failure_scenario_id": "demo_core",
+      "title": "Demo Core",
+      "description": "The core demo: controller outage and recovery, then a partition followed by reconnection.",
+      "tests": "Day-2 integration checkpoint and live judge demo",
+      "seed_offset": 7,
+      "expected_checks": [
+        "Local recovery after the outage",
+        "Task-state reconciliation after reconnection",
+        "Event log records every step"
+      ],
+      "events": [
+        {
+          "id": "E01",
+          "type": "controller_outage",
+          "start_s": 120,
+          "end_s": 300,
+          "target": "central_controller",
+          "severity": "full",
+          "cause": "power_failure",
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 6,
+            "resync_time_s": 8,
+            "total_recovery_s": 14,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 180
+        },
+        {
+          "id": "E02",
+          "type": "network_partition",
+          "start_s": 360,
+          "end_s": 480,
+          "cause": "interference",
+          "groups": [
+            {
+              "group_id": "A",
+              "drone_ids": [
+                "D1",
+                "D2",
+                "D3"
+              ],
+              "has_controller_link": true
+            },
+            {
+              "group_id": "B",
+              "drone_ids": [
+                "D4",
+                "D5",
+                "D6"
+              ],
+              "has_controller_link": false
+            }
+          ],
+          "reconnection": {
+            "detect_timeout_s": 6,
+            "reconnect_delay_s": 8,
+            "resync_time_s": 12,
+            "total_recovery_s": 20,
+            "state_sync": "delta"
+          },
+          "status": "scheduled",
+          "duration_s": 120
+        }
+      ]
+    }
+  ],
+  "test_matrix": [
+    {
+      "run_id": "EQ-normal_operation",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "normal_operation",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10000, 10001, 10002],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-controller_failure",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "controller_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10010, 10011, 10012],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-drone_failure",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "drone_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10020, 10021, 10022],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-network_partition",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "network_partition",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10030, 10031, 10032],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-reconnection",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "reconnection",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10040, 10041, 10042],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-multiple_failures",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "multiple_failures",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10050, 10051, 10052],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-no_fly_battery",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "no_fly_battery",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10060, 10061, 10062],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "EQ-demo_core",
+      "scenario_id": "earthquake",
+      "failure_scenario_id": "demo_core",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [10070, 10071, 10072],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-normal_operation",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "normal_operation",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11000, 11001, 11002],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-controller_failure",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "controller_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11010, 11011, 11012],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-drone_failure",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "drone_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11020, 11021, 11022],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-network_partition",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "network_partition",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11030, 11031, 11032],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-reconnection",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "reconnection",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11040, 11041, 11042],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-multiple_failures",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "multiple_failures",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11050, 11051, 11052],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-no_fly_battery",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "no_fly_battery",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11060, 11061, 11062],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "CY-demo_core",
+      "scenario_id": "cyclone",
+      "failure_scenario_id": "demo_core",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [11070, 11071, 11072],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-normal_operation",
+      "scenario_id": "flood",
+      "failure_scenario_id": "normal_operation",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12000, 12001, 12002],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-controller_failure",
+      "scenario_id": "flood",
+      "failure_scenario_id": "controller_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12010, 12011, 12012],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-drone_failure",
+      "scenario_id": "flood",
+      "failure_scenario_id": "drone_failure",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12020, 12021, 12022],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-network_partition",
+      "scenario_id": "flood",
+      "failure_scenario_id": "network_partition",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12030, 12031, 12032],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-reconnection",
+      "scenario_id": "flood",
+      "failure_scenario_id": "reconnection",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12040, 12041, 12042],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-multiple_failures",
+      "scenario_id": "flood",
+      "failure_scenario_id": "multiple_failures",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12050, 12051, 12052],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-no_fly_battery",
+      "scenario_id": "flood",
+      "failure_scenario_id": "no_fly_battery",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12060, 12061, 12062],
+      "same_inputs_across_modes": true
+    },
+    {
+      "run_id": "FL-demo_core",
+      "scenario_id": "flood",
+      "failure_scenario_id": "demo_core",
+      "modes": [
+        "centralized",
+        "decentralized",
+        "hybrid"
+      ],
+      "seeds": [12070, 12071, 12072],
+      "same_inputs_across_modes": true
+    }
+  ]
+}
