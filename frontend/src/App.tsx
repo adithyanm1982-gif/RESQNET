@@ -11,11 +11,10 @@ import Settings from './pages/Settings'
 
 const tabs = [['/', 'HOME'], ['/mission', 'MISSION CONTROL'], ['/scenarios', 'SCENARIOS'], ['/experiments', 'EXPERIMENTS'], ['/analytics', 'ANALYTICS'], ['/settings', 'SETTINGS']]
 export default function App() {
-  const boot = useStore((s) => s.boot); const health = useStore((s) => s.health); const run = useStore((s) => s.run)
+  const boot = useStore((s) => s.boot); const run = useStore((s) => s.run)
   const [now, setNow] = useState(new Date())
   useEffect(() => { boot() }, [])
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(t) }, [])
-  const ok = health === 'ok' || health === 'db-offline'
   return (
     <div className="app">
       <header className="top">
@@ -24,7 +23,6 @@ export default function App() {
         <div className="top-r">
           <span className="mono mut">{run ? `TICK ${run.tick}` : 'NO RUN'}</span>
           <span className="clock mono">{now.toLocaleTimeString('en-GB')}</span>
-          <span><span className={'dot ' + (ok ? 'g' : 'r')} /><span className="mono">{health === 'ok' ? 'CONNECTED' : health === 'db-offline' ? 'API ONLINE · DB OFFLINE' : health.toUpperCase()}</span></span>
           <ThemeToggle />
           <NavLink className="gear" to="/settings" title="Settings">⚙</NavLink>
         </div>
