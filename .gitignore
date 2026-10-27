@@ -1,14 +1,29 @@
-node_modules/
-/frontend/dist/
+# Secrets: never commit these
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
 
+# Python / backend
 __pycache__/
 *.py[cod]
 .venv/
 venv/
-
-.env
-.env.*
-!.env.example
-
 .pytest_cache/
 .coverage
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+/frontend/dist/
+.vite/
+*.log
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

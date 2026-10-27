@@ -3,6 +3,11 @@ uvicorn[standard]>=0.30,<1
 SQLAlchemy>=2.0,<3
 psycopg[binary]>=3.2,<4
 pydantic-settings>=2.6,<3
-google-auth>=2.38,<3
 pytest>=8,<10
 httpx>=0.27,<1
+
+# Authentication (Google Sign-In + session cookies)
+google-auth>=2.30,<3
+requests>=2.31,<3
+itsdangerous>=2.2,<3
+python-dotenv>=1.0,<2
