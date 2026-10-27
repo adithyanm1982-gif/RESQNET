@@ -1,0 +1,2633 @@
+{
+  "meta": {
+    "name": "RESQNET Disaster Scenarios",
+    "version": "2.0",
+    "supersedes": "1.0",
+    "contract_version": "1.0",
+    "linked_files": [
+      "drone_config.json",
+      "failure_scenarios.json"
+    ],
+    "description": "Three prepared 20x20 disaster maps. Failure conditions live in failure_scenarios.json; drones in drone_config.json. No coordination mode is recommended here: the system must derive it from the conditions.",
+    "coordinate_system": "origin top-left; x = column 0-19 (left to right); y = row 0-19 (top to bottom); cell label = column letter A-T + row number 1-20 (x=1,y=3 -> B4)",
+    "movement_model": "4-neighbour grid moves; blocked and restricted cells are not enterable",
+    "units": {
+      "time": "seconds from mission start",
+      "distance": "cells (cell_size_m metres each)",
+      "network_reliability": "0-1 fraction",
+      "packet_loss_pct": "percent",
+      "latency_ms": "milliseconds"
+    },
+    "modes": [
+      "centralized",
+      "decentralized",
+      "hybrid"
+    ],
+    "cell_states": [
+      "unexplored",
+      "in_progress",
+      "searched",
+      "blocked",
+      "priority"
+    ],
+    "initial_cell_grid_legend": {
+      ".": "unexplored (free)",
+      "#": "blocked / inaccessible",
+      "X": "restricted no-fly"
+    },
+    "map_legend": {
+      "searched": "green - searched, no candidate in simulated observation (not proof of safety)",
+      "in_progress": "yellow - search in progress or needs verification",
+      "priority": "red - high-priority area or unresolved candidate",
+      "blocked": "grey - blocked or inaccessible",
+      "unexplored": "blue - not yet searched"
+    },
+    "priority_scale": {
+      "1": "low",
+      "2": "moderate",
+      "3": "high",
+      "4": "critical",
+      "5": "life_threatening"
+    },
+    "detection_verification_statuses": [
+      "unverified",
+      "verification_assigned",
+      "confirmed",
+      "dismissed"
+    ],
+    "detection_note": "Detections are unconfirmed observations. A rescue may only be shown as confirmed if the backend emits an explicit confirmation event.",
+    "zone_scheme": "16 priority zones of 5x5 cells, Z01-Z16 row-major from top-left. simulated_risk_score is synthetic, derived from documented rules, not a real survivor probability.",
+    "adjustable_parameters": {
+      "network_reliability": {
+        "min": 0.3,
+        "max": 1.0,
+        "step": 0.05
+      }
+    },
+    "synthetic_data_notice": "All values are initial test parameters, not real-world operating specifications."
+  },
+  "scenarios": [
+    {
+      "scenario_id": "earthquake",
+      "name": "Earthquake aftermath",
+      "disaster_type": "earthquake",
+      "description": "Collapsed urban blocks with gas leaks and aftershock cordons; damaged infrastructure makes connectivity intermittent.",
+      "seed": 2101,
+      "grid": {
+        "width": 20,
+        "height": 20,
+        "cell_size_m": 25,
+        "initial_cell_grid": [
+          "....................",
+          "....................",
+          "....................",
+          "....................",
+          "..........#.........",
+          "..........##........",
+          "........XX##.###....",
+          ".....#..XX.#.###....",
+          ".....##.......#.....",
+          ".....#..........XXX.",
+          "#..............#XXX.",
+          "##............####..",
+          "###..........XX###..",
+          "#............XX.....",
+          "#............XX.....",
+          "....................",
+          ".........#..........",
+          ".........#..........",
+          ".........##....#..#.",
+          "...............####."
+        ]
+      },
+      "base": {
+        "x": 0,
+        "y": 0,
+        "sector": "A1"
+      },
+      "communication": {
+        "hub": {
+          "x": 0,
+          "y": 0,
+          "range_cells": 22
+        },
+        "dead_zones": [
+          {
+            "id": "DZ-01",
+            "cause": "infrastructure_damage",
+            "bounds": {
+              "x0": 11,
+              "y0": 3,
+              "x1": 14,
+              "y1": 6
+            }
+          },
+          {
+            "id": "DZ-02",
+            "cause": "terrain_shadow",
+            "bounds": {
+              "x0": 8,
+              "y0": 10,
+              "x1": 10,
+              "y1": 13
+            }
+          }
+        ],
+        "conditions": {
+          "network_reliability": 0.7,
+          "packet_loss_pct": 8,
+          "latency_ms": 120,
+          "controller_failure_risk": 0.6
+        }
+      },
+      "mission": {
+        "duration_s": 600,
+        "tick_s": 2,
+        "urgency_index": 0.67
+      },
+      "obstacles": [
+        {
+          "id": "OBS-01",
+          "type": "collapsed_building",
+          "cells": [
+            [10, 4],
+            [10, 5],
+            [10, 6],
+            [11, 5],
+            [11, 6],
+            [11, 7]
+          ]
+        },
+        {
+          "id": "OBS-02",
+          "type": "collapsed_overpass",
+          "cells": [
+            [15, 18],
+            [15, 19],
+            [16, 19],
+            [17, 19],
+            [18, 18],
+            [18, 19]
+          ]
+        },
+        {
+          "id": "OBS-03",
+          "type": "collapsed_building",
+          "cells": [
+            [9, 16],
+            [9, 17],
+            [9, 18],
+            [10, 18]
+          ]
+        },
+        {
+          "id": "OBS-04",
+          "type": "rubble_pile",
+          "cells": [
+            [14, 11],
+            [15, 10],
+            [15, 11],
+            [15, 12],
+            [16, 11],
+            [16, 12],
+            [17, 11],
+            [17, 12]
+          ]
+        },
+        {
+          "id": "OBS-05",
+          "type": "collapsed_overpass",
+          "cells": [
+            [5, 7],
+            [5, 8],
+            [5, 9],
+            [6, 8]
+          ]
+        },
+        {
+          "id": "OBS-06",
+          "type": "collapsed_overpass",
+          "cells": [
+            [13, 6],
+            [13, 7],
+            [14, 6],
+            [14, 7],
+            [14, 8],
+            [15, 6],
+            [15, 7]
+          ]
+        },
+        {
+          "id": "OBS-07",
+          "type": "collapsed_building",
+          "cells": [
+            [0, 10],
+            [0, 11],
+            [0, 12],
+            [0, 13],
+            [0, 14],
+            [1, 11],
+            [1, 12],
+            [2, 12]
+          ]
+        }
+      ],
+      "blocked_cells": [
+        [0, 10],
+        [0, 11],
+        [0, 12],
+        [0, 13],
+        [0, 14],
+        [1, 11],
+        [1, 12],
+        [2, 12],
+        [5, 7],
+        [5, 8],
+        [5, 9],
+        [6, 8],
+        [9, 16],
+        [9, 17],
+        [9, 18],
+        [10, 4],
+        [10, 5],
+        [10, 6],
+        [10, 18],
+        [11, 5],
+        [11, 6],
+        [11, 7],
+        [13, 6],
+        [13, 7],
+        [14, 6],
+        [14, 7],
+        [14, 8],
+        [14, 11],
+        [15, 6],
+        [15, 7],
+        [15, 10],
+        [15, 11],
+        [15, 12],
+        [15, 18],
+        [15, 19],
+        [16, 11],
+        [16, 12],
+        [16, 19],
+        [17, 11],
+        [17, 12],
+        [17, 19],
+        [18, 18],
+        [18, 19]
+      ],
+      "restricted_zones": [
+        {
+          "id": "RZ-01",
+          "type": "gas_leak",
+          "severity": "high",
+          "no_fly": true,
+          "bounds": {
+            "x0": 8,
+            "y0": 6,
+            "x1": 9,
+            "y1": 7
+          },
+          "cells": [
+            [8, 6],
+            [8, 7],
+            [9, 6],
+            [9, 7]
+          ],
+          "reason": "gas leak"
+        },
+        {
+          "id": "RZ-02",
+          "type": "unstable_structure",
+          "severity": "critical",
+          "no_fly": true,
+          "bounds": {
+            "x0": 13,
+            "y0": 12,
+            "x1": 14,
+            "y1": 14
+          },
+          "cells": [
+            [13, 12],
+            [13, 13],
+            [13, 14],
+            [14, 12],
+            [14, 13],
+            [14, 14]
+          ],
+          "reason": "unstable structure"
+        },
+        {
+          "id": "RZ-03",
+          "type": "aftershock_cordon",
+          "severity": "high",
+          "no_fly": true,
+          "bounds": {
+            "x0": 16,
+            "y0": 9,
+            "x1": 18,
+            "y1": 10
+          },
+          "cells": [
+            [16, 9],
+            [16, 10],
+            [17, 9],
+            [17, 10],
+            [18, 9],
+            [18, 10]
+          ],
+          "reason": "aftershock cordon"
+        }
+      ],
+      "restricted_cells": [
+        [8, 6],
+        [8, 7],
+        [9, 6],
+        [9, 7],
+        [13, 12],
+        [13, 13],
+        [13, 14],
+        [14, 12],
+        [14, 13],
+        [14, 14],
+        [16, 9],
+        [16, 10],
+        [17, 9],
+        [17, 10],
+        [18, 9],
+        [18, 10]
+      ],
+      "zones": [
+        {
+          "zone_id": "Z01",
+          "bounds": {
+            "x0": 0,
+            "y0": 0,
+            "x1": 4,
+            "y1": 4
+          },
+          "sector_range": "A1-E5",
+          "priority_level": 1,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.2
+        },
+        {
+          "zone_id": "Z02",
+          "bounds": {
+            "x0": 5,
+            "y0": 0,
+            "x1": 9,
+            "y1": 4
+          },
+          "sector_range": "F1-J5",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.35
+        },
+        {
+          "zone_id": "Z03",
+          "bounds": {
+            "x0": 10,
+            "y0": 0,
+            "x1": 14,
+            "y1": 4
+          },
+          "sector_range": "K1-O5",
+          "priority_level": 4,
+          "free_cell_count": 24,
+          "hazard_cell_count": 1,
+          "simulated_risk_score": 0.62
+        },
+        {
+          "zone_id": "Z04",
+          "bounds": {
+            "x0": 15,
+            "y0": 0,
+            "x1": 19,
+            "y1": 4
+          },
+          "sector_range": "P1-T5",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.58
+        },
+        {
+          "zone_id": "Z05",
+          "bounds": {
+            "x0": 0,
+            "y0": 5,
+            "x1": 4,
+            "y1": 9
+          },
+          "sector_range": "A6-E10",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.3
+        },
+        {
+          "zone_id": "Z06",
+          "bounds": {
+            "x0": 5,
+            "y0": 5,
+            "x1": 9,
+            "y1": 9
+          },
+          "sector_range": "F6-J10",
+          "priority_level": 3,
+          "free_cell_count": 17,
+          "hazard_cell_count": 8,
+          "simulated_risk_score": 0.44
+        },
+        {
+          "zone_id": "Z07",
+          "bounds": {
+            "x0": 10,
+            "y0": 5,
+            "x1": 14,
+            "y1": 9
+          },
+          "sector_range": "K6-O10",
+          "priority_level": 5,
+          "free_cell_count": 15,
+          "hazard_cell_count": 10,
+          "simulated_risk_score": 0.89
+        },
+        {
+          "zone_id": "Z08",
+          "bounds": {
+            "x0": 15,
+            "y0": 5,
+            "x1": 19,
+            "y1": 9
+          },
+          "sector_range": "P6-T10",
+          "priority_level": 5,
+          "free_cell_count": 20,
+          "hazard_cell_count": 5,
+          "simulated_risk_score": 0.9
+        },
+        {
+          "zone_id": "Z09",
+          "bounds": {
+            "x0": 0,
+            "y0": 10,
+            "x1": 4,
+            "y1": 14
+          },
+          "sector_range": "A11-E15",
+          "priority_level": 1,
+          "free_cell_count": 17,
+          "hazard_cell_count": 8,
+          "simulated_risk_score": 0.21
+        },
+        {
+          "zone_id": "Z10",
+          "bounds": {
+            "x0": 5,
+            "y0": 10,
+            "x1": 9,
+            "y1": 14
+          },
+          "sector_range": "F11-J15",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.52
+        },
+        {
+          "zone_id": "Z11",
+          "bounds": {
+            "x0": 10,
+            "y0": 10,
+            "x1": 14,
+            "y1": 14
+          },
+          "sector_range": "K11-O15",
+          "priority_level": 4,
+          "free_cell_count": 18,
+          "hazard_cell_count": 7,
+          "simulated_risk_score": 0.67
+        },
+        {
+          "zone_id": "Z12",
+          "bounds": {
+            "x0": 15,
+            "y0": 10,
+            "x1": 19,
+            "y1": 14
+          },
+          "sector_range": "P11-T15",
+          "priority_level": 4,
+          "free_cell_count": 15,
+          "hazard_cell_count": 10,
+          "simulated_risk_score": 0.75
+        },
+        {
+          "zone_id": "Z13",
+          "bounds": {
+            "x0": 0,
+            "y0": 15,
+            "x1": 4,
+            "y1": 19
+          },
+          "sector_range": "A16-E20",
+          "priority_level": 1,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.15
+        },
+        {
+          "zone_id": "Z14",
+          "bounds": {
+            "x0": 5,
+            "y0": 15,
+            "x1": 9,
+            "y1": 19
+          },
+          "sector_range": "F16-J20",
+          "priority_level": 2,
+          "free_cell_count": 22,
+          "hazard_cell_count": 3,
+          "simulated_risk_score": 0.4
+        },
+        {
+          "zone_id": "Z15",
+          "bounds": {
+            "x0": 10,
+            "y0": 15,
+            "x1": 14,
+            "y1": 19
+          },
+          "sector_range": "K16-O20",
+          "priority_level": 2,
+          "free_cell_count": 24,
+          "hazard_cell_count": 1,
+          "simulated_risk_score": 0.39
+        },
+        {
+          "zone_id": "Z16",
+          "bounds": {
+            "x0": 15,
+            "y0": 15,
+            "x1": 19,
+            "y1": 19
+          },
+          "sector_range": "P16-T20",
+          "priority_level": 3,
+          "free_cell_count": 19,
+          "hazard_cell_count": 6,
+          "simulated_risk_score": 0.51
+        }
+      ],
+      "tasks": [
+        {
+          "id": "T01",
+          "type": "rubble_scan",
+          "x": 6,
+          "y": 0,
+          "sector": "G1",
+          "zone_id": "Z02",
+          "priority": 2,
+          "priority_label": "moderate",
+          "deadline_s": 560,
+          "est_duration_s": 30,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T02",
+          "type": "collapsed_building_search",
+          "x": 17,
+          "y": 1,
+          "sector": "R2",
+          "zone_id": "Z04",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 28,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T03",
+          "type": "rubble_scan",
+          "x": 6,
+          "y": 3,
+          "sector": "G4",
+          "zone_id": "Z02",
+          "priority": 1,
+          "priority_label": "low",
+          "deadline_s": 600,
+          "est_duration_s": 14,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T04",
+          "type": "collapsed_building_search",
+          "x": 13,
+          "y": 4,
+          "sector": "N5",
+          "zone_id": "Z03",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 14,
+          "required_drones": 1,
+          "in_comm_dead_zone": true,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T05",
+          "type": "rubble_scan",
+          "x": 16,
+          "y": 4,
+          "sector": "Q5",
+          "zone_id": "Z04",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 26,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T06",
+          "type": "collapsed_building_search",
+          "x": 5,
+          "y": 5,
+          "sector": "F6",
+          "zone_id": "Z06",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T07",
+          "type": "collapsed_building_search",
+          "x": 12,
+          "y": 5,
+          "sector": "M6",
+          "zone_id": "Z07",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 22,
+          "required_drones": 2,
+          "in_comm_dead_zone": true,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T08",
+          "type": "collapsed_building_search",
+          "x": 16,
+          "y": 6,
+          "sector": "Q7",
+          "zone_id": "Z08",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 12,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T09",
+          "type": "access_route_survey",
+          "x": 19,
+          "y": 10,
+          "sector": "T11",
+          "zone_id": "Z12",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 16,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T10",
+          "type": "collapsed_building_search",
+          "x": 8,
+          "y": 11,
+          "sector": "I12",
+          "zone_id": "Z10",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 22,
+          "required_drones": 1,
+          "in_comm_dead_zone": true,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T11",
+          "type": "collapsed_building_search",
+          "x": 12,
+          "y": 13,
+          "sector": "M14",
+          "zone_id": "Z11",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 20,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T12",
+          "type": "collapsed_building_search",
+          "x": 16,
+          "y": 14,
+          "sector": "Q15",
+          "zone_id": "Z12",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 12,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T13",
+          "type": "rubble_scan",
+          "x": 17,
+          "y": 15,
+          "sector": "R16",
+          "zone_id": "Z16",
+          "priority": 2,
+          "priority_label": "moderate",
+          "deadline_s": 560,
+          "est_duration_s": 14,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T14",
+          "type": "collapsed_building_search",
+          "x": 19,
+          "y": 15,
+          "sector": "T16",
+          "zone_id": "Z16",
+          "priority": 2,
+          "priority_label": "moderate",
+          "deadline_s": 560,
+          "est_duration_s": 10,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        }
+      ],
+      "candidate_detections": [
+        {
+          "id": "C01",
+          "x": 7,
+          "y": 8,
+          "sector": "H9",
+          "zone_id": "Z06",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-001",
+          "confidence": 0.72,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-001",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.72,
+                "bbox": [280, 181, 397, 284]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C02",
+          "x": 8,
+          "y": 9,
+          "sector": "I10",
+          "zone_id": "Z06",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-002",
+          "confidence": 0.73,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-002",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.73,
+                "bbox": [320, 193, 422, 319]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C03",
+          "x": 16,
+          "y": 18,
+          "sector": "Q19",
+          "zone_id": "Z16",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-003",
+          "confidence": 0.95,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-003",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.95,
+                "bbox": [296, 253, 350, 384]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C04",
+          "x": 4,
+          "y": 0,
+          "sector": "E1",
+          "zone_id": "Z01",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-004",
+          "confidence": 0.88,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-004",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.88,
+                "bbox": [247, 217, 343, 363]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": false,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        }
+      ],
+      "stats": {
+        "blocked_cells": 43,
+        "restricted_cells": 16,
+        "free_cells": 341,
+        "inaccessible_pocket_cells": 0,
+        "task_count": 14,
+        "tasks_by_priority": {
+          "1": 1,
+          "2": 3,
+          "3": 4,
+          "4": 2,
+          "5": 4
+        },
+        "detection_count": 4
+      }
+    },
+    {
+      "scenario_id": "cyclone",
+      "name": "Cyclone aftermath",
+      "disaster_type": "cyclone",
+      "description": "Scattered debris, fallen trees and flooded roads after landfall; broad but moderate network degradation.",
+      "seed": 2102,
+      "grid": {
+        "width": 20,
+        "height": 20,
+        "cell_size_m": 25,
+        "initial_cell_grid": [
+          "....................",
+          "..............##....",
+          "..............##....",
+          "..............###...",
+          "................#...",
+          "...##XXX............",
+          "....#XXX............",
+          ".....XXX.....XX.....",
+          ".............XX.....",
+          "#...................",
+          "###.................",
+          "####................",
+          "##..................",
+          "##..##..........XXX.",
+          "##..#...........XXX.",
+          "...###...##.........",
+          ".....#...###........",
+          "....................",
+          "....................",
+          "...................."
+        ]
+      },
+      "base": {
+        "x": 0,
+        "y": 19,
+        "sector": "A20"
+      },
+      "communication": {
+        "hub": {
+          "x": 0,
+          "y": 19,
+          "range_cells": 22
+        },
+        "dead_zones": [
+          {
+            "id": "DZ-01",
+            "cause": "cell_tower_outage",
+            "bounds": {
+              "x0": 5,
+              "y0": 7,
+              "x1": 9,
+              "y1": 10
+            }
+          }
+        ],
+        "conditions": {
+          "network_reliability": 0.75,
+          "packet_loss_pct": 6,
+          "latency_ms": 200,
+          "controller_failure_risk": 0.45
+        }
+      },
+      "mission": {
+        "duration_s": 600,
+        "tick_s": 2,
+        "urgency_index": 0.74
+      },
+      "obstacles": [
+        {
+          "id": "OBS-01",
+          "type": "fallen_tree_cluster",
+          "cells": [
+            [9, 15],
+            [9, 16],
+            [10, 15],
+            [10, 16],
+            [11, 16]
+          ]
+        },
+        {
+          "id": "OBS-02",
+          "type": "damaged_structure",
+          "cells": [
+            [0, 9],
+            [0, 10],
+            [0, 11],
+            [1, 10],
+            [1, 11]
+          ]
+        },
+        {
+          "id": "OBS-03",
+          "type": "flooded_road",
+          "cells": [
+            [14, 1],
+            [14, 2],
+            [14, 3]
+          ]
+        },
+        {
+          "id": "OBS-04",
+          "type": "fallen_tree_cluster",
+          "cells": [
+            [3, 5],
+            [4, 5],
+            [4, 6]
+          ]
+        },
+        {
+          "id": "OBS-05",
+          "type": "fallen_tree_cluster",
+          "cells": [
+            [3, 15],
+            [4, 15],
+            [5, 15],
+            [5, 16]
+          ]
+        },
+        {
+          "id": "OBS-06",
+          "type": "damaged_structure",
+          "cells": [
+            [15, 1],
+            [15, 2],
+            [15, 3],
+            [16, 3],
+            [16, 4]
+          ]
+        },
+        {
+          "id": "OBS-07",
+          "type": "flooded_road",
+          "cells": [
+            [4, 13],
+            [4, 14],
+            [5, 13]
+          ]
+        },
+        {
+          "id": "OBS-08",
+          "type": "fallen_tree_cluster",
+          "cells": [
+            [0, 12],
+            [0, 14],
+            [1, 12],
+            [1, 13],
+            [1, 14]
+          ]
+        },
+        {
+          "id": "OBS-09",
+          "type": "fallen_tree_cluster",
+          "cells": [
+            [2, 10],
+            [2, 11],
+            [3, 11]
+          ]
+        },
+        {
+          "id": "OBS-10",
+          "type": "inaccessible_pocket",
+          "cells": [
+            [0, 13]
+          ]
+        }
+      ],
+      "blocked_cells": [
+        [0, 9],
+        [0, 10],
+        [0, 11],
+        [0, 12],
+        [0, 13],
+        [0, 14],
+        [1, 10],
+        [1, 11],
+        [1, 12],
+        [1, 13],
+        [1, 14],
+        [2, 10],
+        [2, 11],
+        [3, 5],
+        [3, 11],
+        [3, 15],
+        [4, 5],
+        [4, 6],
+        [4, 13],
+        [4, 14],
+        [4, 15],
+        [5, 13],
+        [5, 15],
+        [5, 16],
+        [9, 15],
+        [9, 16],
+        [10, 15],
+        [10, 16],
+        [11, 16],
+        [14, 1],
+        [14, 2],
+        [14, 3],
+        [15, 1],
+        [15, 2],
+        [15, 3],
+        [16, 3],
+        [16, 4]
+      ],
+      "restricted_zones": [
+        {
+          "id": "RZ-01",
+          "type": "high_wind_cell",
+          "severity": "high",
+          "no_fly": true,
+          "bounds": {
+            "x0": 5,
+            "y0": 5,
+            "x1": 7,
+            "y1": 7
+          },
+          "cells": [
+            [5, 5],
+            [5, 6],
+            [5, 7],
+            [6, 5],
+            [6, 6],
+            [6, 7],
+            [7, 5],
+            [7, 6],
+            [7, 7]
+          ],
+          "reason": "high wind cell"
+        },
+        {
+          "id": "RZ-02",
+          "type": "downed_power_lines",
+          "severity": "critical",
+          "no_fly": true,
+          "bounds": {
+            "x0": 13,
+            "y0": 7,
+            "x1": 14,
+            "y1": 8
+          },
+          "cells": [
+            [13, 7],
+            [13, 8],
+            [14, 7],
+            [14, 8]
+          ],
+          "reason": "downed power lines"
+        },
+        {
+          "id": "RZ-03",
+          "type": "storm_surge_pocket",
+          "severity": "high",
+          "no_fly": true,
+          "bounds": {
+            "x0": 16,
+            "y0": 13,
+            "x1": 18,
+            "y1": 14
+          },
+          "cells": [
+            [16, 13],
+            [16, 14],
+            [17, 13],
+            [17, 14],
+            [18, 13],
+            [18, 14]
+          ],
+          "reason": "storm surge pocket"
+        }
+      ],
+      "restricted_cells": [
+        [5, 5],
+        [5, 6],
+        [5, 7],
+        [6, 5],
+        [6, 6],
+        [6, 7],
+        [7, 5],
+        [7, 6],
+        [7, 7],
+        [13, 7],
+        [13, 8],
+        [14, 7],
+        [14, 8],
+        [16, 13],
+        [16, 14],
+        [17, 13],
+        [17, 14],
+        [18, 13],
+        [18, 14]
+      ],
+      "zones": [
+        {
+          "zone_id": "Z01",
+          "bounds": {
+            "x0": 0,
+            "y0": 0,
+            "x1": 4,
+            "y1": 4
+          },
+          "sector_range": "A1-E5",
+          "priority_level": 1,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.22
+        },
+        {
+          "zone_id": "Z02",
+          "bounds": {
+            "x0": 5,
+            "y0": 0,
+            "x1": 9,
+            "y1": 4
+          },
+          "sector_range": "F1-J5",
+          "priority_level": 1,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.11
+        },
+        {
+          "zone_id": "Z03",
+          "bounds": {
+            "x0": 10,
+            "y0": 0,
+            "x1": 14,
+            "y1": 4
+          },
+          "sector_range": "K1-O5",
+          "priority_level": 2,
+          "free_cell_count": 22,
+          "hazard_cell_count": 3,
+          "simulated_risk_score": 0.34
+        },
+        {
+          "zone_id": "Z04",
+          "bounds": {
+            "x0": 15,
+            "y0": 0,
+            "x1": 19,
+            "y1": 4
+          },
+          "sector_range": "P1-T5",
+          "priority_level": 2,
+          "free_cell_count": 20,
+          "hazard_cell_count": 5,
+          "simulated_risk_score": 0.34
+        },
+        {
+          "zone_id": "Z05",
+          "bounds": {
+            "x0": 0,
+            "y0": 5,
+            "x1": 4,
+            "y1": 9
+          },
+          "sector_range": "A6-E10",
+          "priority_level": 1,
+          "free_cell_count": 21,
+          "hazard_cell_count": 4,
+          "simulated_risk_score": 0.19
+        },
+        {
+          "zone_id": "Z06",
+          "bounds": {
+            "x0": 5,
+            "y0": 5,
+            "x1": 9,
+            "y1": 9
+          },
+          "sector_range": "F6-J10",
+          "priority_level": 3,
+          "free_cell_count": 16,
+          "hazard_cell_count": 9,
+          "simulated_risk_score": 0.44
+        },
+        {
+          "zone_id": "Z07",
+          "bounds": {
+            "x0": 10,
+            "y0": 5,
+            "x1": 14,
+            "y1": 9
+          },
+          "sector_range": "K6-O10",
+          "priority_level": 4,
+          "free_cell_count": 21,
+          "hazard_cell_count": 4,
+          "simulated_risk_score": 0.61
+        },
+        {
+          "zone_id": "Z08",
+          "bounds": {
+            "x0": 15,
+            "y0": 5,
+            "x1": 19,
+            "y1": 9
+          },
+          "sector_range": "P6-T10",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.52
+        },
+        {
+          "zone_id": "Z09",
+          "bounds": {
+            "x0": 0,
+            "y0": 10,
+            "x1": 4,
+            "y1": 14
+          },
+          "sector_range": "A11-E15",
+          "priority_level": 2,
+          "free_cell_count": 10,
+          "hazard_cell_count": 15,
+          "simulated_risk_score": 0.26
+        },
+        {
+          "zone_id": "Z10",
+          "bounds": {
+            "x0": 5,
+            "y0": 10,
+            "x1": 9,
+            "y1": 14
+          },
+          "sector_range": "F11-J15",
+          "priority_level": 3,
+          "free_cell_count": 24,
+          "hazard_cell_count": 1,
+          "simulated_risk_score": 0.55
+        },
+        {
+          "zone_id": "Z11",
+          "bounds": {
+            "x0": 10,
+            "y0": 10,
+            "x1": 14,
+            "y1": 14
+          },
+          "sector_range": "K11-O15",
+          "priority_level": 4,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.6
+        },
+        {
+          "zone_id": "Z12",
+          "bounds": {
+            "x0": 15,
+            "y0": 10,
+            "x1": 19,
+            "y1": 14
+          },
+          "sector_range": "P11-T15",
+          "priority_level": 4,
+          "free_cell_count": 19,
+          "hazard_cell_count": 6,
+          "simulated_risk_score": 0.72
+        },
+        {
+          "zone_id": "Z13",
+          "bounds": {
+            "x0": 0,
+            "y0": 15,
+            "x1": 4,
+            "y1": 19
+          },
+          "sector_range": "A16-E20",
+          "priority_level": 2,
+          "free_cell_count": 23,
+          "hazard_cell_count": 2,
+          "simulated_risk_score": 0.34
+        },
+        {
+          "zone_id": "Z14",
+          "bounds": {
+            "x0": 5,
+            "y0": 15,
+            "x1": 9,
+            "y1": 19
+          },
+          "sector_range": "F16-J20",
+          "priority_level": 3,
+          "free_cell_count": 21,
+          "hazard_cell_count": 4,
+          "simulated_risk_score": 0.45
+        },
+        {
+          "zone_id": "Z15",
+          "bounds": {
+            "x0": 10,
+            "y0": 15,
+            "x1": 14,
+            "y1": 19
+          },
+          "sector_range": "K16-O20",
+          "priority_level": 5,
+          "free_cell_count": 22,
+          "hazard_cell_count": 3,
+          "simulated_risk_score": 0.86
+        },
+        {
+          "zone_id": "Z16",
+          "bounds": {
+            "x0": 15,
+            "y0": 15,
+            "x1": 19,
+            "y1": 19
+          },
+          "sector_range": "P16-T20",
+          "priority_level": 5,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.88
+        }
+      ],
+      "tasks": [
+        {
+          "id": "T01",
+          "type": "road_clearance_survey",
+          "x": 18,
+          "y": 2,
+          "sector": "S3",
+          "zone_id": "Z04",
+          "priority": 1,
+          "priority_label": "low",
+          "deadline_s": 600,
+          "est_duration_s": 26,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T02",
+          "type": "coastal_sweep",
+          "x": 13,
+          "y": 10,
+          "sector": "N11",
+          "zone_id": "Z11",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 26,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T03",
+          "type": "road_clearance_survey",
+          "x": 18,
+          "y": 10,
+          "sector": "S11",
+          "zone_id": "Z12",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 30,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T04",
+          "type": "shelter_search",
+          "x": 7,
+          "y": 11,
+          "sector": "H12",
+          "zone_id": "Z10",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 8,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T05",
+          "type": "road_clearance_survey",
+          "x": 9,
+          "y": 11,
+          "sector": "J12",
+          "zone_id": "Z10",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 10,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T06",
+          "type": "coastal_sweep",
+          "x": 17,
+          "y": 12,
+          "sector": "R13",
+          "zone_id": "Z12",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 30,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T07",
+          "type": "shelter_search",
+          "x": 9,
+          "y": 13,
+          "sector": "J14",
+          "zone_id": "Z10",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 26,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T08",
+          "type": "road_clearance_survey",
+          "x": 14,
+          "y": 13,
+          "sector": "O14",
+          "zone_id": "Z11",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T09",
+          "type": "shelter_search",
+          "x": 12,
+          "y": 15,
+          "sector": "M16",
+          "zone_id": "Z15",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 24,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T10",
+          "type": "shelter_search",
+          "x": 7,
+          "y": 16,
+          "sector": "H17",
+          "zone_id": "Z14",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 30,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T11",
+          "type": "coastal_sweep",
+          "x": 4,
+          "y": 17,
+          "sector": "E18",
+          "zone_id": "Z13",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T12",
+          "type": "coastal_sweep",
+          "x": 6,
+          "y": 17,
+          "sector": "G18",
+          "zone_id": "Z14",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 12,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T13",
+          "type": "shelter_search",
+          "x": 11,
+          "y": 18,
+          "sector": "L19",
+          "zone_id": "Z15",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 8,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T14",
+          "type": "road_clearance_survey",
+          "x": 16,
+          "y": 18,
+          "sector": "Q19",
+          "zone_id": "Z16",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 16,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        }
+      ],
+      "candidate_detections": [
+        {
+          "id": "C01",
+          "x": 13,
+          "y": 14,
+          "sector": "N15",
+          "zone_id": "Z11",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-001",
+          "confidence": 0.67,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-001",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.67,
+                "bbox": [387, 148, 479, 249]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C02",
+          "x": 18,
+          "y": 15,
+          "sector": "S16",
+          "zone_id": "Z16",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-002",
+          "confidence": 0.9,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-002",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.9,
+                "bbox": [340, 172, 408, 259]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C03",
+          "x": 16,
+          "y": 12,
+          "sector": "Q13",
+          "zone_id": "Z12",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-003",
+          "confidence": 0.83,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-003",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.83,
+                "bbox": [74, 190, 147, 264]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C04",
+          "x": 0,
+          "y": 8,
+          "sector": "A9",
+          "zone_id": "Z05",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-004",
+          "confidence": 0.94,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-004",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.94,
+                "bbox": [298, 169, 390, 309]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": false,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        }
+      ],
+      "stats": {
+        "blocked_cells": 37,
+        "restricted_cells": 19,
+        "free_cells": 344,
+        "inaccessible_pocket_cells": 1,
+        "task_count": 14,
+        "tasks_by_priority": {
+          "1": 1,
+          "2": 0,
+          "3": 5,
+          "4": 4,
+          "5": 4
+        },
+        "detection_count": 4
+      }
+    },
+    {
+      "scenario_id": "flood",
+      "name": "Flooded region",
+      "disaster_type": "flood",
+      "description": "A river channel splits the area with two bridges; good connectivity on dry land, interference near the water.",
+      "seed": 2103,
+      "grid": {
+        "width": 20,
+        "height": 20,
+        "cell_size_m": 25,
+        "initial_cell_grid": [
+          "........##..........",
+          ".......##...........",
+          "........##..........",
+          ".......##........#..",
+          ".................##.",
+          "........##..#....XX.",
+          ".......##...#....XX.",
+          "........##......#...",
+          ".........##.....##..",
+          ".........##..##.....",
+          ".........##..##.....",
+          "........##..........",
+          ".......##...........",
+          ".......##...XXX.....",
+          "........##..XXX.....",
+          "....................",
+          "..........##........",
+          "..........##........",
+          "..........##........",
+          "...........##......."
+        ]
+      },
+      "base": {
+        "x": 0,
+        "y": 10,
+        "sector": "A11"
+      },
+      "communication": {
+        "hub": {
+          "x": 0,
+          "y": 10,
+          "range_cells": 22
+        },
+        "dead_zones": [
+          {
+            "id": "DZ-01",
+            "cause": "river_interference",
+            "bounds": {
+              "x0": 2,
+              "y0": 1,
+              "x1": 4,
+              "y1": 5
+            }
+          }
+        ],
+        "conditions": {
+          "network_reliability": 0.85,
+          "packet_loss_pct": 3,
+          "latency_ms": 90,
+          "controller_failure_risk": 0.25
+        }
+      },
+      "mission": {
+        "duration_s": 600,
+        "tick_s": 2,
+        "urgency_index": 0.73
+      },
+      "obstacles": [
+        {
+          "id": "OBS-01",
+          "type": "river_channel",
+          "cells": [
+            [7, 1],
+            [7, 3],
+            [7, 6],
+            [7, 12],
+            [7, 13],
+            [8, 0],
+            [8, 1],
+            [8, 2],
+            [8, 3],
+            [8, 5],
+            [8, 6],
+            [8, 7],
+            [8, 11],
+            [8, 12],
+            [8, 13],
+            [8, 14],
+            [9, 0],
+            [9, 2],
+            [9, 5],
+            [9, 7],
+            [9, 8],
+            [9, 9],
+            [9, 10],
+            [9, 11],
+            [9, 14],
+            [10, 8],
+            [10, 9],
+            [10, 10],
+            [10, 16],
+            [10, 17],
+            [10, 18],
+            [11, 16],
+            [11, 17],
+            [11, 18],
+            [11, 19],
+            [12, 19]
+          ]
+        },
+        {
+          "id": "OBS-02",
+          "type": "debris_jam",
+          "cells": [
+            [12, 5],
+            [12, 6]
+          ]
+        },
+        {
+          "id": "OBS-03",
+          "type": "submerged_vehicles",
+          "cells": [
+            [16, 7],
+            [16, 8],
+            [17, 8]
+          ]
+        },
+        {
+          "id": "OBS-04",
+          "type": "collapsed_embankment",
+          "cells": [
+            [17, 3],
+            [17, 4],
+            [18, 4]
+          ]
+        },
+        {
+          "id": "OBS-05",
+          "type": "submerged_vehicles",
+          "cells": [
+            [13, 9],
+            [13, 10],
+            [14, 9],
+            [14, 10]
+          ]
+        }
+      ],
+      "blocked_cells": [
+        [7, 1],
+        [7, 3],
+        [7, 6],
+        [7, 12],
+        [7, 13],
+        [8, 0],
+        [8, 1],
+        [8, 2],
+        [8, 3],
+        [8, 5],
+        [8, 6],
+        [8, 7],
+        [8, 11],
+        [8, 12],
+        [8, 13],
+        [8, 14],
+        [9, 0],
+        [9, 2],
+        [9, 5],
+        [9, 7],
+        [9, 8],
+        [9, 9],
+        [9, 10],
+        [9, 11],
+        [9, 14],
+        [10, 8],
+        [10, 9],
+        [10, 10],
+        [10, 16],
+        [10, 17],
+        [10, 18],
+        [11, 16],
+        [11, 17],
+        [11, 18],
+        [11, 19],
+        [12, 5],
+        [12, 6],
+        [12, 19],
+        [13, 9],
+        [13, 10],
+        [14, 9],
+        [14, 10],
+        [16, 7],
+        [16, 8],
+        [17, 3],
+        [17, 4],
+        [17, 8],
+        [18, 4]
+      ],
+      "restricted_zones": [
+        {
+          "id": "RZ-01",
+          "type": "electrified_water",
+          "severity": "critical",
+          "no_fly": true,
+          "bounds": {
+            "x0": 17,
+            "y0": 5,
+            "x1": 18,
+            "y1": 6
+          },
+          "cells": [
+            [17, 5],
+            [17, 6],
+            [18, 5],
+            [18, 6]
+          ],
+          "reason": "electrified water"
+        },
+        {
+          "id": "RZ-02",
+          "type": "dam_spillway_zone",
+          "severity": "high",
+          "no_fly": true,
+          "bounds": {
+            "x0": 12,
+            "y0": 13,
+            "x1": 14,
+            "y1": 14
+          },
+          "cells": [
+            [12, 13],
+            [12, 14],
+            [13, 13],
+            [13, 14],
+            [14, 13],
+            [14, 14]
+          ],
+          "reason": "dam spillway zone"
+        }
+      ],
+      "restricted_cells": [
+        [12, 13],
+        [12, 14],
+        [13, 13],
+        [13, 14],
+        [14, 13],
+        [14, 14],
+        [17, 5],
+        [17, 6],
+        [18, 5],
+        [18, 6]
+      ],
+      "zones": [
+        {
+          "zone_id": "Z01",
+          "bounds": {
+            "x0": 0,
+            "y0": 0,
+            "x1": 4,
+            "y1": 4
+          },
+          "sector_range": "A1-E5",
+          "priority_level": 1,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.14
+        },
+        {
+          "zone_id": "Z02",
+          "bounds": {
+            "x0": 5,
+            "y0": 0,
+            "x1": 9,
+            "y1": 4
+          },
+          "sector_range": "F1-J5",
+          "priority_level": 1,
+          "free_cell_count": 17,
+          "hazard_cell_count": 8,
+          "simulated_risk_score": 0.18
+        },
+        {
+          "zone_id": "Z03",
+          "bounds": {
+            "x0": 10,
+            "y0": 0,
+            "x1": 14,
+            "y1": 4
+          },
+          "sector_range": "K1-O5",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.25
+        },
+        {
+          "zone_id": "Z04",
+          "bounds": {
+            "x0": 15,
+            "y0": 0,
+            "x1": 19,
+            "y1": 4
+          },
+          "sector_range": "P1-T5",
+          "priority_level": 1,
+          "free_cell_count": 22,
+          "hazard_cell_count": 3,
+          "simulated_risk_score": 0.1
+        },
+        {
+          "zone_id": "Z05",
+          "bounds": {
+            "x0": 0,
+            "y0": 5,
+            "x1": 4,
+            "y1": 9
+          },
+          "sector_range": "A6-E10",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.25
+        },
+        {
+          "zone_id": "Z06",
+          "bounds": {
+            "x0": 5,
+            "y0": 5,
+            "x1": 9,
+            "y1": 9
+          },
+          "sector_range": "F6-J10",
+          "priority_level": 4,
+          "free_cell_count": 17,
+          "hazard_cell_count": 8,
+          "simulated_risk_score": 0.6
+        },
+        {
+          "zone_id": "Z07",
+          "bounds": {
+            "x0": 10,
+            "y0": 5,
+            "x1": 14,
+            "y1": 9
+          },
+          "sector_range": "K6-O10",
+          "priority_level": 4,
+          "free_cell_count": 19,
+          "hazard_cell_count": 6,
+          "simulated_risk_score": 0.69
+        },
+        {
+          "zone_id": "Z08",
+          "bounds": {
+            "x0": 15,
+            "y0": 5,
+            "x1": 19,
+            "y1": 9
+          },
+          "sector_range": "P6-T10",
+          "priority_level": 3,
+          "free_cell_count": 18,
+          "hazard_cell_count": 7,
+          "simulated_risk_score": 0.43
+        },
+        {
+          "zone_id": "Z09",
+          "bounds": {
+            "x0": 0,
+            "y0": 10,
+            "x1": 4,
+            "y1": 14
+          },
+          "sector_range": "A11-E15",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.48
+        },
+        {
+          "zone_id": "Z10",
+          "bounds": {
+            "x0": 5,
+            "y0": 10,
+            "x1": 9,
+            "y1": 14
+          },
+          "sector_range": "F11-J15",
+          "priority_level": 5,
+          "free_cell_count": 16,
+          "hazard_cell_count": 9,
+          "simulated_risk_score": 0.78
+        },
+        {
+          "zone_id": "Z11",
+          "bounds": {
+            "x0": 10,
+            "y0": 10,
+            "x1": 14,
+            "y1": 14
+          },
+          "sector_range": "K11-O15",
+          "priority_level": 5,
+          "free_cell_count": 16,
+          "hazard_cell_count": 9,
+          "simulated_risk_score": 0.91
+        },
+        {
+          "zone_id": "Z12",
+          "bounds": {
+            "x0": 15,
+            "y0": 10,
+            "x1": 19,
+            "y1": 14
+          },
+          "sector_range": "P11-T15",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.56
+        },
+        {
+          "zone_id": "Z13",
+          "bounds": {
+            "x0": 0,
+            "y0": 15,
+            "x1": 4,
+            "y1": 19
+          },
+          "sector_range": "A16-E20",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.33
+        },
+        {
+          "zone_id": "Z14",
+          "bounds": {
+            "x0": 5,
+            "y0": 15,
+            "x1": 9,
+            "y1": 19
+          },
+          "sector_range": "F16-J20",
+          "priority_level": 3,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.47
+        },
+        {
+          "zone_id": "Z15",
+          "bounds": {
+            "x0": 10,
+            "y0": 15,
+            "x1": 14,
+            "y1": 19
+          },
+          "sector_range": "K16-O20",
+          "priority_level": 4,
+          "free_cell_count": 17,
+          "hazard_cell_count": 8,
+          "simulated_risk_score": 0.6
+        },
+        {
+          "zone_id": "Z16",
+          "bounds": {
+            "x0": 15,
+            "y0": 15,
+            "x1": 19,
+            "y1": 19
+          },
+          "sector_range": "P16-T20",
+          "priority_level": 2,
+          "free_cell_count": 25,
+          "hazard_cell_count": 0,
+          "simulated_risk_score": 0.33
+        }
+      ],
+      "tasks": [
+        {
+          "id": "T01",
+          "type": "stranded_person_search",
+          "x": 14,
+          "y": 1,
+          "sector": "O2",
+          "zone_id": "Z03",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T02",
+          "type": "bank_survey",
+          "x": 13,
+          "y": 4,
+          "sector": "N5",
+          "zone_id": "Z03",
+          "priority": 1,
+          "priority_label": "low",
+          "deadline_s": 600,
+          "est_duration_s": 16,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T03",
+          "type": "stranded_person_search",
+          "x": 11,
+          "y": 5,
+          "sector": "L6",
+          "zone_id": "Z07",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 28,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T04",
+          "type": "bank_survey",
+          "x": 15,
+          "y": 5,
+          "sector": "P6",
+          "zone_id": "Z08",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 26,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T05",
+          "type": "stranded_person_search",
+          "x": 3,
+          "y": 6,
+          "sector": "D7",
+          "zone_id": "Z05",
+          "priority": 2,
+          "priority_label": "moderate",
+          "deadline_s": 560,
+          "est_duration_s": 28,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T06",
+          "type": "rooftop_scan",
+          "x": 7,
+          "y": 7,
+          "sector": "H8",
+          "zone_id": "Z06",
+          "priority": 3,
+          "priority_label": "high",
+          "deadline_s": 440,
+          "est_duration_s": 20,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T07",
+          "type": "stranded_person_search",
+          "x": 13,
+          "y": 11,
+          "sector": "N12",
+          "zone_id": "Z11",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 28,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T08",
+          "type": "bank_survey",
+          "x": 5,
+          "y": 12,
+          "sector": "F13",
+          "zone_id": "Z10",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T09",
+          "type": "stranded_person_search",
+          "x": 9,
+          "y": 12,
+          "sector": "J13",
+          "zone_id": "Z10",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 26,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T10",
+          "type": "stranded_person_search",
+          "x": 13,
+          "y": 12,
+          "sector": "N13",
+          "zone_id": "Z11",
+          "priority": 5,
+          "priority_label": "life_threatening",
+          "deadline_s": 200,
+          "est_duration_s": 22,
+          "required_drones": 2,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T11",
+          "type": "bank_survey",
+          "x": 9,
+          "y": 13,
+          "sector": "J14",
+          "zone_id": "Z10",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 14,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T12",
+          "type": "bank_survey",
+          "x": 16,
+          "y": 14,
+          "sector": "Q15",
+          "zone_id": "Z12",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 18,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T13",
+          "type": "stranded_person_search",
+          "x": 13,
+          "y": 16,
+          "sector": "N17",
+          "zone_id": "Z15",
+          "priority": 4,
+          "priority_label": "critical",
+          "deadline_s": 320,
+          "est_duration_s": 8,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        },
+        {
+          "id": "T14",
+          "type": "bank_survey",
+          "x": 19,
+          "y": 18,
+          "sector": "T19",
+          "zone_id": "Z16",
+          "priority": 2,
+          "priority_label": "moderate",
+          "deadline_s": 560,
+          "est_duration_s": 28,
+          "required_drones": 1,
+          "in_comm_dead_zone": false,
+          "status": "pending",
+          "assigned_to": null
+        }
+      ],
+      "candidate_detections": [
+        {
+          "id": "C01",
+          "x": 15,
+          "y": 7,
+          "sector": "P8",
+          "zone_id": "Z08",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-001",
+          "confidence": 0.61,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-001",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.61,
+                "bbox": [296, 212, 354, 392]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": false,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C02",
+          "x": 14,
+          "y": 11,
+          "sector": "O12",
+          "zone_id": "Z11",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-002",
+          "confidence": 0.69,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-002",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.69,
+                "bbox": [234, 59, 332, 147]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C03",
+          "x": 7,
+          "y": 11,
+          "sector": "H12",
+          "zone_id": "Z10",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-003",
+          "confidence": 0.73,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-003",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.73,
+                "bbox": [221, 132, 311, 306]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        },
+        {
+          "id": "C04",
+          "x": 13,
+          "y": 1,
+          "sector": "N2",
+          "zone_id": "Z03",
+          "reveal_condition": "cell_searched",
+          "evidence_image_id": "simulated-image-004",
+          "confidence": 0.68,
+          "verification_status": "unverified",
+          "cv_payload": {
+            "image_id": "simulated-image-004",
+            "detections": [
+              {
+                "label": "person",
+                "confidence": 0.68,
+                "bbox": [307, 231, 351, 395]
+              }
+            ]
+          },
+          "ground_truth": {
+            "person_present": true,
+            "note": "backend-only simulation truth; never display or treat as confirmation"
+          }
+        }
+      ],
+      "bridges": [
+        {
+          "id": "BR-01",
+          "cells": [
+            [7, 4],
+            [8, 4]
+          ]
+        },
+        {
+          "id": "BR-02",
+          "cells": [
+            [9, 15],
+            [10, 15]
+          ]
+        }
+      ],
+      "stats": {
+        "blocked_cells": 48,
+        "restricted_cells": 10,
+        "free_cells": 342,
+        "inaccessible_pocket_cells": 0,
+        "task_count": 14,
+        "tasks_by_priority": {
+          "1": 1,
+          "2": 2,
+          "3": 2,
+          "4": 5,
+          "5": 4
+        },
+        "detection_count": 4
+      }
+    }
+  ]
+}

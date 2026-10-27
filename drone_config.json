@@ -1,0 +1,388 @@
+{
+  "meta": {
+    "name": "RESQNET Drone Configuration",
+    "version": "2.0",
+    "supersedes": "1.0",
+    "contract_version": "1.0",
+    "linked_files": [
+      "disaster_scenarios.json",
+      "failure_scenarios.json"
+    ],
+    "coordinate_system": "origin top-left; x = column 0-19 (left to right); y = row 0-19 (top to bottom); cell label = column letter A-T + row number 1-20 (x=1,y=3 -> B4)",
+    "units": {
+      "speed": "cells per tick (and m/s)",
+      "tick_s": 2,
+      "cell_size_m": 25,
+      "battery": "percent of full charge",
+      "drain": "percent per tick"
+    },
+    "drone_status_values": [
+      "idle",
+      "searching",
+      "disconnected",
+      "recovering",
+      "returning"
+    ],
+    "modes": [
+      "centralized",
+      "decentralized",
+      "hybrid"
+    ],
+    "assumptions": [
+      "Speeds, drain rates and ranges are initial test values, not real flight specifications.",
+      "Battery use per tick = drain_pct_per_tick[activity].",
+      "A drone should return home when battery <= return_threshold_pct, or when battery <= distance_to_base_cells * drain_moving * 1.2.",
+      "Below critical_pct the drone stops and is treated as unable to continue.",
+      "A drone reaches the controller if within hub range, or through a chain of peers within comm_range_cells (relay drones extend this)."
+    ]
+  },
+  "drone_types": {
+    "scout": {
+      "description": "Fast searcher; search footprint is the 3x3 cells around it",
+      "speed_cells_per_tick": 1.0,
+      "speed_mps": 12.5,
+      "sensor_radius_cells": 1,
+      "comm_range_cells": 6,
+      "battery": {
+        "capacity_pct": 100,
+        "drain_pct_per_tick": {
+          "idle": 0.05,
+          "moving": 0.3,
+          "searching": 0.25
+        },
+        "return_threshold_pct": 25,
+        "critical_pct": 10,
+        "estimated_endurance_ticks_moving": 333,
+        "estimated_endurance_s_moving": 666
+      }
+    },
+    "standard": {
+      "description": "Standard searcher",
+      "speed_cells_per_tick": 0.8,
+      "speed_mps": 10.0,
+      "sensor_radius_cells": 1,
+      "comm_range_cells": 6,
+      "battery": {
+        "capacity_pct": 100,
+        "drain_pct_per_tick": {
+          "idle": 0.05,
+          "moving": 0.28,
+          "searching": 0.22
+        },
+        "return_threshold_pct": 25,
+        "critical_pct": 10,
+        "estimated_endurance_ticks_moving": 357,
+        "estimated_endurance_s_moving": 714
+      }
+    },
+    "relay": {
+      "description": "Slower relay drone with extended comm range for bridging links",
+      "speed_cells_per_tick": 0.6,
+      "speed_mps": 7.5,
+      "sensor_radius_cells": 0,
+      "comm_range_cells": 12,
+      "battery": {
+        "capacity_pct": 100,
+        "drain_pct_per_tick": {
+          "idle": 0.04,
+          "moving": 0.22,
+          "searching": 0.18
+        },
+        "return_threshold_pct": 25,
+        "critical_pct": 10,
+        "estimated_endurance_ticks_moving": 455,
+        "estimated_endurance_s_moving": 910
+      }
+    }
+  },
+  "fleets": [
+    {
+      "scenario_id": "earthquake",
+      "fleet_size": 6,
+      "drones": [
+        {
+          "id": "D1",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 0
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 100,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D2",
+          "type": "scout",
+          "initial_position": {
+            "x": 1,
+            "y": 0
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 96,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D3",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 1
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 96,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D4",
+          "type": "scout",
+          "initial_position": {
+            "x": 2,
+            "y": 0
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 98,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D5",
+          "type": "standard",
+          "initial_position": {
+            "x": 1,
+            "y": 1
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 95,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D6",
+          "type": "relay",
+          "initial_position": {
+            "x": 0,
+            "y": 2
+          },
+          "home_base": {
+            "x": 0,
+            "y": 0
+          },
+          "initial_battery_pct": 98,
+          "initial_status": "idle",
+          "can_relay": true
+        }
+      ]
+    },
+    {
+      "scenario_id": "cyclone",
+      "fleet_size": 6,
+      "drones": [
+        {
+          "id": "D1",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 19
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 98,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D2",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 18
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 95,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D3",
+          "type": "scout",
+          "initial_position": {
+            "x": 1,
+            "y": 19
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 100,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D4",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 17
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 96,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D5",
+          "type": "standard",
+          "initial_position": {
+            "x": 1,
+            "y": 18
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 95,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D6",
+          "type": "relay",
+          "initial_position": {
+            "x": 2,
+            "y": 19
+          },
+          "home_base": {
+            "x": 0,
+            "y": 19
+          },
+          "initial_battery_pct": 95,
+          "initial_status": "idle",
+          "can_relay": true
+        }
+      ]
+    },
+    {
+      "scenario_id": "flood",
+      "fleet_size": 6,
+      "drones": [
+        {
+          "id": "D1",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 10
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 96,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D2",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 9
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 95,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D3",
+          "type": "scout",
+          "initial_position": {
+            "x": 1,
+            "y": 10
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 98,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D4",
+          "type": "scout",
+          "initial_position": {
+            "x": 0,
+            "y": 11
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 100,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D5",
+          "type": "standard",
+          "initial_position": {
+            "x": 0,
+            "y": 8
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 100,
+          "initial_status": "idle",
+          "can_relay": false
+        },
+        {
+          "id": "D6",
+          "type": "relay",
+          "initial_position": {
+            "x": 1,
+            "y": 9
+          },
+          "home_base": {
+            "x": 0,
+            "y": 10
+          },
+          "initial_battery_pct": 100,
+          "initial_status": "idle",
+          "can_relay": true
+        }
+      ]
+    }
+  ]
+}
