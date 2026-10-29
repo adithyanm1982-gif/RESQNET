@@ -4,9 +4,13 @@ import MapView from '../components/MapView'
 import { DroneIcon } from '../components/Icons'
 import { useStore } from '../store'
 import { label, latlon } from '../geo'
-import { batteryOf, connOf, dname, dronePriority, healthOf, mmss } from '../lib'
+import { batteryOf, connOf, dname, healthOf, mmss } from '../lib'
 import { batClass } from '../batteryColor'
 import type { CoordinationMode } from '../api'
+
+// Hazard priority level -> colour (same palette as the map legend)
+const PRI_COLOR: Record<number, string> = { 5: '#ff1744', 4: '#ff6d00', 3: '#ffea00', 2: '#00e676', 1: '#00e5ff' }
+const priColor = (level: number) => PRI_COLOR[level] ?? '#00e5ff'
 
 export default function Mission() {
   const s = useStore(); const { run } = s
@@ -63,7 +67,6 @@ export default function Mission() {
     reconciliation: 'Reconciliation',
   }
   const inProg = run.tasks.filter((t: any) => t.status !== 'completed' && t.status !== 'pending' && t.status !== 'blocked').length
-  const basisText = { current: 'Current task', assigned: 'Assigned task', completed: 'Highest-priority task completed' }
 
   return (
     <div className="mc">
@@ -97,16 +100,15 @@ export default function Mission() {
         <div className="card"><h3><span className="grow">Drone priority & flight paths</span><span className="badge">{run.drones.length} drones</span></h3>
           <div className="pathlist">
             {run.drones.map((d: any) => {
-              const pr = dronePriority(run, d)
+              const hz = s.hazards[d.drone_id]
               const path: [number, number][] = s.trails[d.drone_id] || []
               return (
-                <div key={d.drone_id} className="pathbox" style={pr ? ({ '--pc': pr.color } as any) : undefined} onClick={() => s.select(d.drone_id)}>
+                <div key={d.drone_id} className="pathbox" style={hz ? ({ '--pc': priColor(hz.priority_level) } as any) : undefined} onClick={() => s.select(d.drone_id)}>
                   <div className="ph">
                     <b>{dname(d.drone_id)}</b>
-                    {pr ? <span className="pchip">P{pr.level} · {pr.label}</span> : <span className="mut">No task priority yet</span>}
+                    {hz ? <span className="pchip">P{hz.priority_level} · {hz.priority_label}</span> : <span className="mut">No priority data</span>}
                     <span className="grow" /><span className="mut mono">{path.length} pts</span>
                   </div>
-                  {pr && <div className="mut" style={{ fontSize: 10.5, marginTop: 3 }}>{basisText[pr.basis]}: <span className="mono">{pr.task}</span></div>}
                   {path.length
                     ? <ol className="plist mono">{path.map(([x, y], i) => <li key={i}>({x}, {y}) · {label(x, y)}</li>)}</ol>
                     : <span className="mut" style={{ fontSize: 11 }}>No path recorded yet.</span>}
