@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 import { api, type CoordinationMode, type CustomFailureEvent, validateCustomFailurePlan } from './api'
-import { Obs, emptyObs, observe, rowsOf, summary, dname } from './lib'
+import { Obs, emptyObs, observe, summary } from './lib'
 
 export type Sev = 'info' | 'warn' | 'error'
 export type Ev = { id: number; t: string; iso: string; tick: number; sev: Sev; cat: string; drone?: string; msg: string }
-export type Alert = { id: number; title: string; detail: string; t: string; tick: number; sev: Sev; ack: boolean; drone?: string }
 export type Handoff = { id: number; tick: number; t: string; task: string; from: string; to: string; x: number; y: number }
+export type HazardPriority = { priority_level: number; priority_label: string }
 
 const load = (k: string, d: any) => { try { const v = JSON.parse(localStorage.getItem(k) || ''); return v ?? d } catch { return d } }
 const persist = (k: string, v: any) => { try { localStorage.setItem(k, JSON.stringify(v)); return true } catch { return false } }
@@ -19,7 +19,8 @@ interface S {
   customPlan: CustomFailureEvent[]; setCustomPlan: (events: CustomFailureEvent[]) => void
   scenarios: any[]; scenarioId: string; mode: CoordinationMode
   run: any | null; archived: boolean; trails: Record<string, [number, number][]>; visited: Set<string>; dist: Record<string, number>; bat: Record<string, number>; lastSeen: Record<string, number>
-  events: Ev[]; alerts: Alert[]; handoffs: Handoff[]; active: Record<string, 1>; obs: Obs
+  events: Ev[]; handoffs: Handoff[]; active: Record<string, 1>; obs: Obs
+  hazards: Record<string, HazardPriority>; setHazards: (h: Record<string, HazardPriority>) => void
   covHistory: { tick: number; cov: number; done: number; disc: number; dup: number }[]
   running: boolean; busy: boolean; error: string; health: string; booting: boolean
   speedMs: number; ticksPerStep: number; selected: string; seed: string; basemap: 'satellite' | 'dark'; secPerTick: number
@@ -29,11 +30,11 @@ interface S {
   setSpeed: (n: number) => void; setTicksPerStep: (n: number) => void; select: (id: string) => void
   setSeed: (s: string) => void; setBasemap: (b: 'satellite' | 'dark') => void; setSecPerTick: (n: number) => void
   saveRun: () => void; openSaved: (id: string) => Promise<boolean>; deleteSaved: (id: string) => void
-  addNote: (cat: string, msg: string, sev?: Sev) => void; ackAll: () => void; ack: (id: number) => void
+  addNote: (cat: string, msg: string, sev?: Sev) => void
   compare: (ticks: number) => Promise<void>; saveComparison: () => void; clearSaved: () => void; wipeLocal: () => void
 }
 
-const fresh = () => ({ run: null, archived: false, trails: {}, visited: new Set<string>(), dist: {}, bat: {}, lastSeen: {}, events: [], alerts: [], handoffs: [], active: {}, obs: emptyObs(), covHistory: [] })
+const fresh = () => ({ run: null, archived: false, trails: {}, visited: new Set<string>(), dist: {}, bat: {}, lastSeen: {}, events: [], handoffs: [], active: {}, obs: emptyObs(), covHistory: [] })
 const initialFailId = localStorage.getItem('rq_fail') || ''
 const storedFailureSource = localStorage.getItem('rq_schedule_source')
 const initialFailureSource: S['failureSource'] = storedFailureSource === 'none' || storedFailureSource === 'predefined' || storedFailureSource === 'custom'
@@ -44,12 +45,12 @@ const scenarioDroneIds = (scenarioId: string, droneCfg: any) =>
   (droneCfg?.fleets?.find((fleet: any) => fleet.scenario_id === scenarioId)?.drones || [])
     .map((drone: any) => drone.id)
 
-// Compare previous and next backend state -> events, alerts, handoffs, conflicts (everything derived from real data)
+// Compare previous and next backend state -> events, handoffs, conflicts (derived from real data).
+// Frontend-generated alerts and "task blocked" warnings were intentionally removed.
 function absorb(s: S, next: any) {
   const prev = s.run; const tick = next.tick
-  const evs: Ev[] = []; const als: Alert[] = []; const hands: Handoff[] = []
-  const active = { ...s.active }; const rows = rowsOf(next.grid)
-  const alert = (sev: Sev, title: string, detail: string, drone?: string) => als.push({ id: uid++, title, detail, t: now(), tick, sev, ack: false, drone })
+  const evs: Ev[] = []; const hands: Handoff[] = []
+  const active = { ...s.active }
   const on = (key: string, cond: boolean, onTrue: () => void, onFalse?: () => void) => { if (cond && !active[key]) { active[key] = 1; onTrue() } else if (!cond && active[key]) { delete active[key]; onFalse?.() } }
 
   if (prev) {
@@ -57,7 +58,7 @@ function absorb(s: S, next: any) {
     for (const t of next.tasks) {
       const o = pt[t.task_id]; if (!o) continue
       const a0: string[] = o.assigned_to || []; const a1: string[] = t.assigned_to || []
-      if (o.status !== t.status) evs.push(mk(tick, t.status === 'blocked' ? 'warn' : 'info', 'Task allocation', `Task ${t.task_id} ${o.status} → ${t.status}${a1.length ? ` (${a1.join(', ')})` : ''}`, a1[0]))
+      if (o.status !== t.status && o.status !== 'blocked' && t.status !== 'blocked') evs.push(mk(tick, 'info', 'Task allocation', `Task ${t.task_id} ${o.status} → ${t.status}${a1.length ? ` (${a1.join(', ')})` : ''}`, a1[0]))
       if (a0.length && a1.length && !a1.some((x) => a0.includes(x))) {
         hands.push({ id: uid++, tick, t: now(), task: t.task_id, from: a0[0], to: a1[0], x: t.x, y: t.y })
         evs.push(mk(tick, 'warn', 'Recovery', `Task ${t.task_id} reassigned ${a0.join(',')} → ${a1.join(',')}`, a1[0]))
@@ -74,7 +75,6 @@ function absorb(s: S, next: any) {
     }
   }
 
-  // Alerts: communication, restricted zone proximity, ownership conflicts, low battery
   const bat = { ...s.bat }
   const prevD: any = Object.fromEntries((prev?.drones || []).map((d: any) => [d.drone_id, d])); const dt = prev ? Math.max(0, tick - prev.tick) : 0
   for (const d of next.drones) { // battery modelled from drone_config.json (initial %, drain %/tick by activity)
@@ -90,26 +90,16 @@ function absorb(s: S, next: any) {
     if (!last || last[0] !== d.x || last[1] !== d.y) tr.push([d.x, d.y])
     visited.add(`${d.x},${d.y}`)
     if (d.status !== 'disconnected') lastSeen[d.drone_id] = tick
-    const id = d.drone_id
-    on(`disc:${id}`, d.status === 'disconnected', () => alert('error', 'Communication Lost', `${dname(id)} stopped reporting`, id), () => alert('info', 'Link Restored', `${dname(id)} reconnected`, id))
-    const here = rows[d.y]?.[d.x] === 'X'
-    let near = false
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (rows[d.y + dy]?.[d.x + dx] === 'X') near = true
-    on(`zin:${id}`, here, () => alert('error', 'Restricted Zone', `${dname(id)} inside boundary`, id))
-    on(`znear:${id}`, near && !here, () => alert('warn', 'Restricted Zone', `${dname(id)} near boundary`, id))
-    const bv = d.battery != null ? d.battery : bat[id] ?? 100
-    on(`bat:${id}`, bv < 25, () => alert('warn', 'Low Battery', `${dname(id)} at ${Math.round(bv)}% (return threshold 25%)`, id))
   }
   for (const t of next.tasks) {
     const dupe = (t.assigned_to || []).length > 1 && t.status !== 'completed'
-    on(`dup:${t.task_id}`, dupe, () => { alert('error', 'Conflicting Ownership', `Task ${t.task_id} owned by ${t.assigned_to.join(', ')}`); evs.push(mk(tick, 'error', 'Conflict', `Duplicate/conflicting ownership on ${t.task_id}: ${t.assigned_to.join(', ')}`)) },
+    on(`dup:${t.task_id}`, dupe, () => evs.push(mk(tick, 'error', 'Conflict', `Duplicate/conflicting ownership on ${t.task_id}: ${t.assigned_to.join(', ')}`)),
       () => evs.push(mk(tick, 'info', 'Reconciliation', `Ownership conflict on ${t.task_id} resolved`)))
-    on(`blk:${t.task_id}`, t.status === 'blocked', () => alert('warn', 'Task Blocked', `Task ${t.task_id} cannot proceed`))
   }
   const obs = observe(s.obs, next)
   return {
     run: next, trails, visited, dist, bat, lastSeen, active, obs,
-    events: [...evs.reverse(), ...s.events].slice(0, 600), alerts: [...als.reverse(), ...s.alerts].slice(0, 100), handoffs: [...hands, ...s.handoffs].slice(0, 50),
+    events: [...evs.reverse(), ...s.events].slice(0, 600), handoffs: [...hands, ...s.handoffs].slice(0, 50),
     covHistory: [...s.covHistory, { tick, cov: next.coverage?.percentage ?? 0, done: next.completed_tasks?.length ?? 0, disc: obs.discNow, dup: obs.dupNow }].slice(-800),
   }
 }
@@ -119,7 +109,7 @@ export const useStore = create<S>((set, get) => ({
   failureSource: initialFailureSource,
   customPlan: Array.isArray(loadedCustomPlan) ? loadedCustomPlan : [],
   scenarios: [], scenarioId: localStorage.getItem('rq_scn') || '', mode: (localStorage.getItem('rq_mode') as CoordinationMode) || 'hybrid',
-  ...fresh(), running: false, busy: false, error: '', health: 'unknown', booting: false,
+  ...fresh(), hazards: {}, running: false, busy: false, error: '', health: 'unknown', booting: false,
   speedMs: load('rq_speed', 700), ticksPerStep: load('rq_tps', 1), selected: '', seed: load('rq_seed', ''), basemap: load('rq_base', 'satellite'), secPerTick: load('rq_spt', 2),
   saved: load('rq_saved2', []), comparison: [], cmpProgress: '',
 
@@ -147,6 +137,7 @@ export const useStore = create<S>((set, get) => ({
   setCustomPlan: (events) => { persist('rq_custom_plan', events); set({ customPlan: events }) },
   setScenario: (id) => { localStorage.setItem('rq_scn', id); set({ scenarioId: id }) },
   setMode: (m) => { localStorage.setItem('rq_mode', m); set({ mode: m }) },
+  setHazards: (h) => set({ hazards: h }),
   start: async () => {
     const { scenarioId, mode, failId, failureSource, customPlan, droneCfg } = get(); if (!scenarioId) return false
     if (failureSource === 'predefined' && !failId) { set({ error: 'Choose a predefined failure schedule or select no failure schedule.' }); return false }
@@ -180,8 +171,6 @@ export const useStore = create<S>((set, get) => ({
   setSecPerTick: (n) => { persist('rq_spt', n); set({ secPerTick: n }) },
   select: (id) => set({ selected: id }),
   addNote: (cat, msg, sev = 'info') => { const { run } = get(); if (msg.trim()) set((s) => ({ events: [mk(run?.tick ?? 0, sev, cat, msg.trim()), ...s.events] })) },
-  ackAll: () => set((s) => ({ alerts: s.alerts.map((a) => ({ ...a, ack: true })) })),
-  ack: (id) => set((s) => ({ alerts: s.alerts.map((a) => (a.id === id ? { ...a, ack: true } : a)) })),
   saveRun: () => {
     const { run, mode, saved, events, covHistory, handoffs, trails, visited, dist, obs } = get(); if (!run) return
     const rec = { ...summary(run, mode, obs), detail: { run, events: events.slice(0, 300), covHistory: covHistory.slice(-300), handoffs, trails, visited: [...visited], dist, bat: get().bat, obs } }

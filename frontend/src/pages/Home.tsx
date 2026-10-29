@@ -6,7 +6,7 @@ import { connOf } from '../lib'
 import { tip, usePal } from '../theme'
 export default function Home() {
   const P = usePal(); const TT = tip(P)
-  const s = useStore(); const { run, saved, health, scenarios, alerts, comparison, events } = s
+  const s = useStore(); const { run, saved, health, scenarios, comparison, events } = s
   const ok = health === 'ok' || health === 'db-offline'
   const steps: [string, boolean, string][] = [
     ['1 · Choose a scenario', !!s.scenarioId && !!scenarios.length, '/scenarios'], ['2 · Start the mission', !!run, '/mission'],
@@ -26,14 +26,11 @@ export default function Home() {
       <div className="kpis">
         {([['Backend', ok ? 'ONLINE' : health.toUpperCase(), ok ? 'c-g' : 'c-r'], ['Scenarios', scenarios.length, ''], ['Coverage', run ? `${run.coverage.percentage}%` : '—', 'c-c'],
           ['Tasks done', run ? `${run.completed_tasks.length}/${run.tasks.length}` : '—', 'c-g'], ['Fleet linked', run ? `${run.drones.filter(connOf).length}/${run.drones.length}` : '—', run && run.drones.some((d: any) => !connOf(d)) ? 'c-r' : 'c-g'],
-          ['Open alerts', alerts.filter((a) => !a.ack).length, 'c-a'], ['Saved runs', saved.length, '']] as any[]).map(([l, v, c]) => <div className="card kpi" key={l}><span className={'v ' + c}>{v}</span><span className="l">{l}</span></div>)}
+          ['Saved runs', saved.length, '']] as any[]).map(([l, v, c]) => <div className="card kpi" key={l}><span className={'v ' + c}>{v}</span><span className="l">{l}</span></div>)}
       </div>
       <div className="grid2">
-        <div className="card"><h3>Demo flow (tracks real progress)</h3>
+        <div className="card" style={{ gridColumn: '1 / -1' }}><h3>Demo flow (tracks real progress)</h3>
           {steps.map(([l, d, to]) => <Link key={l} to={to} className="ms" style={{ color: 'inherit', textDecoration: 'none' }}><span className={'ck ' + (d ? '' : 'pending')}>{d ? '✓' : '○'}</span><span>{l}</span></Link>)}</div>
-        <div className="card"><h3>Recent alerts</h3><div className="alist">
-          {alerts.slice(0, 5).map((a) => <div key={a.id} className={'al ' + (a.ack ? 'ack' : '')}><span className={'ai ' + a.sev}>{a.sev === 'error' ? '!' : a.sev === 'warn' ? '▲' : 'i'}</span><div><b>{a.title}</b><span>{a.detail}</span><br /><small>{a.t}</small></div></div>)}
-          {!alerts.length && <span className="mut">No alerts. Start a mission to see live alerts.</span>}</div></div>
       </div>
       <div className="grid2">
         <div className="card" style={{ height: 270 }}><h3>Coverage over time (current run)</h3>

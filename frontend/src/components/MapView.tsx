@@ -31,6 +31,15 @@ const TRAIL = [
   '#60a5fa',
 ]
 
+// Hazard priority legend shown in the "i" panel: [level, meaning, hex]
+const PRIORITY_LEGEND: [number, string, string][] = [
+  [5, 'Life-threatening', '#ff1744'],
+  [4, 'Critical', '#ff6d00'],
+  [3, 'High', '#ffea00'],
+  [2, 'Moderate', '#00e676'],
+  [1, 'Low', '#00e5ff'],
+]
+
 type HazardAnalysis = {
   scenario: string
   filename: string
@@ -300,6 +309,7 @@ export default function MapView({
     hazardsRef.current = []
     setHazardResults([])
     setHazardError('')
+    useStore.getState().setHazards({})
 
     // Close a previous scenario's popup when changing scenarios.
     popupRef.current?.remove()
@@ -323,12 +333,26 @@ export default function MapView({
 
         hazardsRef.current = results
         setHazardResults(results)
+
+        // Share per-drone priority with the Mission Control side panel.
+        useStore.getState().setHazards(
+          Object.fromEntries(
+            results.map((item) => [
+              item.drone_id,
+              {
+                priority_level: item.priority_level,
+                priority_label: item.priority_label,
+              },
+            ]),
+          ),
+        )
       })
       .catch((error: unknown) => {
         if (cancelled) return
 
         hazardsRef.current = []
         setHazardResults([])
+        useStore.getState().setHazards({})
 
         setHazardError(
           error instanceof Error
@@ -1121,16 +1145,6 @@ export default function MapView({
           </span>
 
           <span>
-            <i style={{ background: '#64748b' }} />
-            Blocked (obstacle)
-          </span>
-
-          <span>
-            <i style={{ background: '#f87171' }} />
-            Restricted zone (RZ)
-          </span>
-
-          <span>
             <i style={{ border: '1px dashed #fbbf24' }} />
             Caution (next to RZ)
           </span>
@@ -1145,18 +1159,34 @@ export default function MapView({
           {dot('#fbbf24', 'Task pending')}
           {dot('#f87171', 'Task blocked')}
 
-          <span>H Task handoff</span>
-          <span>◯ Drone healthy</span>
           <span>┅ Low battery</span>
           <span>■ Link lost</span>
 
-          <hr />
+          <hr style={{ gridColumn: '1 / -1', width: '100%', margin: '2px 0' }} />
 
-          <strong>Hazard priority outlines</strong>
-          {dot('#34d399', 'Low priority')}
-          {dot('#fbbf24', 'Medium priority')}
-          {dot('#fb923c', 'High priority')}
-          {dot('#f87171', 'Critical priority')}
+          <div style={{ gridColumn: '1 / -1', display: 'grid', gap: 4 }}>
+            <strong>Hazard priority level</strong>
+            {PRIORITY_LEGEND.map(([level, meaning, hex]) => (
+              <span key={level}>
+                <i
+                  style={{
+                    background: hex,
+                    border: `1px solid ${hex}`,
+                    width: 12,
+                    height: 12,
+                    borderRadius: 3,
+                  }}
+                />
+                <b>{level}</b> · {meaning}
+                <span
+                  className="mono"
+                  style={{ marginLeft: 'auto', opacity: 0.75 }}
+                >
+                  {hex}
+                </span>
+              </span>
+            ))}
+          </div>
 
           <span>Hover over a drone to view saved analysis.</span>
           <span>Use the popup close button to dismiss the analysis.</span>
