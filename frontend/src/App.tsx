@@ -31,7 +31,8 @@ export default function App() {
 
   const appVisible = authEnabled === false || authStatus === 'in'
   const apiOnline = health === 'ok' || health === 'db-offline'
-  const apiLabel = health === 'ok' ? 'API ONLINE' : health === 'db-offline' ? 'API ONLINE · DATABASE OFFLINE' : health.toUpperCase()
+  // UI change: "DATABASE OFFLINE" text removed from the header label
+  const apiLabel = health === 'ok' || health === 'db-offline' ? 'API ONLINE' : health.toUpperCase()
   return (
     <div className="app">
       <header className="top">
