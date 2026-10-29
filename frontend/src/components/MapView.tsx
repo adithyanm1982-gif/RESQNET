@@ -165,6 +165,7 @@ function readableList(items: string[]): string {
 function createHazardPopupContent(
   hazard: HazardAnalysis,
   maxHeight: number,
+  coordinates: [number, number],
 ): HTMLElement {
   const root = document.createElement('div')
 
@@ -183,7 +184,7 @@ function createHazardPopupContent(
   ].join(';')
 
   const title = document.createElement('div')
-  title.textContent = `${hazard.drone_id} · ${hazard.timeframe}`
+  title.textContent = hazard.drone_id
   title.style.cssText =
     'font-size:15px;font-weight:700;margin-bottom:8px;color:#f9fafb'
   root.appendChild(title)
@@ -234,6 +235,11 @@ function createHazardPopupContent(
   priority.style.cssText =
     `font-weight:700;color:${priorityColor(hazard.priority_level)};margin-bottom:5px`
   root.appendChild(priority)
+
+  const coordinateLabel = document.createElement('div')
+  coordinateLabel.textContent = `Coordinates: ${coordinates[1].toFixed(6)}, ${coordinates[0].toFixed(6)}`
+  coordinateLabel.style.marginBottom = '5px'
+  root.appendChild(coordinateLabel)
 
   const risk = document.createElement('div')
   risk.textContent = `Risk score: ${hazard.simulated_risk_score}`
@@ -767,7 +773,13 @@ export default function MapView({
             anchor: (vert + horiz) as any,
           })
             .setLngLat(toLngLat(d.x + 0.5, d.y + 0.5))
-            .setDOMContent(createHazardPopupContent(hazard, maxH))
+            .setDOMContent(
+              createHazardPopupContent(
+                hazard,
+                maxH,
+                toLngLat(d.x + 0.5, d.y + 0.5),
+              ),
+            )
             .addTo(mm)
 
           activePopup = popup
