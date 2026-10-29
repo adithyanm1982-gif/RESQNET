@@ -1,5 +1,3 @@
-
-
 import { batClass } from '../batteryColor'
 
 import { useEffect, useRef, useState } from 'react'
@@ -1440,46 +1438,34 @@ export default function MapView({
 
           : batClass(b.v)
 
-
+          
 
       const hazard = hazardsRef.current.find(
-
         (item) => item.drone_id === d.drone_id,
-
       )
 
-
+      // Priority colour is drawn as a small square on the drone icon only
+      // (no outline on the whole marker, which stretched across the map).
+      p.e.style.outline = ''
+      p.e.style.outlineOffset = ''
+      p.e.style.borderRadius = ''
+      const icon = p.e.querySelector('.ic') as HTMLElement | null
 
       if (hazard) {
-
         const color = priorityColor(hazard.priority_level)
 
-
-
-        p.e.style.outline = `2px solid ${color}`
-
-        p.e.style.outlineOffset = '2px'
-
-        p.e.style.borderRadius = '6px'
-
-
+        if (icon) {
+          icon.style.borderRadius = '7px'
+          icon.style.border = `2px solid ${color}`
+          icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
+        }
 
         p.e.title =
-
           `${d.drone_id}: ${hazard.priority_label} priority · ` +
-
           `Risk ${hazard.simulated_risk_score} · Hover for details`
-
       } else {
-
-        p.e.style.outline = ''
-
-        p.e.style.outlineOffset = ''
-
         p.e.title =
-
           `${d.drone_id}: no saved hazard result for ${timeframe}`
-
       }
 
     }

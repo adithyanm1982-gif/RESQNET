@@ -17,9 +17,5 @@ export default function Settings() {
           <div className="row"><label className="f">Cell (0,0) latitude<input value={lat} onChange={(e) => setLat(e.target.value)} /></label><label className="f">longitude<input value={lng} onChange={(e) => setLng(e.target.value)} /></label></div>
           <button style={{ width: 'fit-content' }} onClick={() => { localStorage.setItem('rq_anchor', JSON.stringify({ lat: +lat, lng: +lng })); location.reload() }}>Apply & reload</button></div>
       </div>
-      <div className="card"><h3>Backend</h3>
-        <div className="mono" style={{ lineHeight: 1.8 }}>Health: <b className={s.health === 'ok' ? 'c-g' : 'c-a'}>{s.health === 'db-offline' ? 'API online · PostgreSQL offline (simulation still works)' : s.health}</b><br />Backend: {import.meta.env.VITE_BACKEND_URL || 'same-origin / local Vite proxy'} · no API key needed<br />Scenarios: {s.scenarios.length} · Fleets: {s.droneCfg?.fleets?.length ?? 0} · Failure scenarios: {s.failScen.length}</div>
-        <p className="mut">Set <span className="mono">VITE_BACKEND_URL</span> to the backend origin in Vercel. Leave it blank locally to use the Vite <span className="mono">/api</span> proxy. All scenario, drone and failure data is read from the backend's dataset files.</p>
-        <div className="row"><button onClick={s.boot}>Re-check backend</button><button className="danger" onClick={() => { if (confirm('Delete all saved runs and local settings?')) s.wipeLocal() }}>Reset local data</button></div></div>
     </div>)
 }
