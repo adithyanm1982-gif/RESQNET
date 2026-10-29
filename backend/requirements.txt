@@ -11,3 +11,5 @@ google-auth>=2.30,<3
 requests>=2.31,<3
 itsdangerous>=2.2,<3
 python-dotenv>=1.0,<2
+
+google-genai

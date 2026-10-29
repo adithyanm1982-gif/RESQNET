@@ -1,0 +1,22 @@
+{
+  "image_hash": "81e5e0d0724fd2ade5f106d8c60ab8dbc7e8bab882e72ea6e813564e0eac7ec4",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D5_T2.png",
+    "drone_id": "D5",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "Collapsed building structure and debris field",
+      "Damaged roof with exposed rafters and holes"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.5987,
+    "explanation": "An aerial view shows severe structural damage to a building, with a collapsed section and scattered debris across the ground, indicating a major structural failure or disaster.",
+    "confidence": 0.9,
+    "limitations": "The exact cause of the structural collapse and the status of any individuals visible in or around the debris cannot be definitively confirmed from the image alone.",
+    "analysis_source": "gemini"
+  }
+}

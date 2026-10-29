@@ -1,0 +1,21 @@
+{
+  "image_hash": "b5734cc147925f6b32c4a66bc6839a663e91e8a14d910e6cc661b1e1902c8df7",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D6_T1.png",
+    "drone_id": "D6",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "widespread flooding surrounding structures"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6082,
+    "explanation": "The image shows a large area of residential structures significantly inundated with floodwaters, indicating a severe flood hazard affecting multiple buildings.",
+    "confidence": 0.9,
+    "limitations": "The current status of inhabitants, structural integrity of the flooded buildings, and depth of the water cannot be precisely determined from the aerial view.",
+    "analysis_source": "gemini"
+  }
+}

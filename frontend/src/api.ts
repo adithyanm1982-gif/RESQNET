@@ -3,6 +3,27 @@ const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || '').replace(/\/+$/, '')
 const apiUrl = (path: string) => `${BACKEND_URL}${path}`
 
 export type CoordinationMode = 'centralized' | 'decentralized' | 'hybrid'
+export type HazardAnalysis = {
+  scenario: string
+  filename: string
+  drone_id: string
+  timeframe: string
+  visible_hazards: string[]
+  priority_level: number
+  priority_label: string
+  simulated_risk_score: number
+  explanation: string
+  confidence: number
+  limitations: string[]
+  analysis_source: string
+  image_url: string
+}
+export type HazardResultsResponse = {
+  scenario: string
+  timeframe: string
+  count: number
+  results: HazardAnalysis[]
+}
 export type CustomFailureType = 'controller_outage' | 'network_partition' | 'drone_unresponsive'
 export type CustomFailureReconnection = {
   detect_timeout_ticks: number
@@ -139,6 +160,8 @@ export const api = {
   state: (id: string) => req(`/api/simulations/${id}`),
   droneConfig: () => req('/api/datasets/drone-config'),
   failureScenarios: () => req('/api/datasets/failure-scenarios'),
+  hazardResults: (scenario: string, timeframe: string) =>
+    req(`/api/computer-vision/results/${encodeURIComponent(scenario)}/${encodeURIComponent(timeframe)}`) as Promise<HazardResultsResponse>,
   installFailureSchedule: (id: string, failure_scenario_id: string) => req(
     `/api/simulations/${id}/failures`,
     { method: 'POST', body: JSON.stringify({ failure_scenario_id }) },

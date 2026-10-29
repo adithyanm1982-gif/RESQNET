@@ -1,0 +1,22 @@
+{
+  "image_hash": "fbe410c7d4a2b6a57316f4b9920efdf082234a40ca0d673eabe85a172a28442d",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D3_T1.png",
+    "drone_id": "D3",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural damage to a building",
+      "numerous small extraneous digital artifacts or collaged figures distributed across the image"
+    ],
+    "priority_level": 3,
+    "priority_label": "high",
+    "simulated_risk_score": 0.5718,
+    "explanation": "The image shows a building with visible structural damage or collapse, surrounded by debris and an area resembling a parking lot and a pool. Numerous small, collaged figure-like artifacts are scattered across the scene.",
+    "confidence": 0.85,
+    "limitations": "The image quality is low and heavily edited with collaged artifacts, making precise assessment of current conditions and hazards difficult.",
+    "analysis_source": "gemini"
+  }
+}

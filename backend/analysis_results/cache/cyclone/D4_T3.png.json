@@ -1,0 +1,22 @@
+{
+  "image_hash": "45350110ca58a7303e545e2d2ca1e4b39b36fa52d67681ee64a32d92235cbeaa",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D4_T3.png",
+    "drone_id": "D4",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "large dark scorch or burn marks on the roof and side of a large building",
+      "structural damage or staining on the exterior wall of the building"
+    ],
+    "priority_level": 3,
+    "priority_label": "high",
+    "simulated_risk_score": 0.5476,
+    "explanation": "The image shows a large industrial or aircraft hangar-style building with extensive dark discoloration and possible burn or fire damage on the roof and facade. Several small figures (appearing digitally inserted or collaged) are visible around the structure, but no active fire or immediate life-threatening emergency is actively displayed.",
+    "confidence": 0.85,
+    "limitations": "The image contains collaged or digitally altered small figures that are unclear in nature. It is uncertain whether the fire damage is active, historical, or part of a training exercise.",
+    "analysis_source": "gemini"
+  }
+}

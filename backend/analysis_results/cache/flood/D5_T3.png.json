@@ -1,0 +1,22 @@
+{
+  "image_hash": "8dca195b1cf3bcec725c20d51621685ba73e7f07301f81029fbb30c425308bed",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D5_T3.png",
+    "drone_id": "D5",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "flooded street or area",
+      "vehicles surrounded by water"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6886,
+    "explanation": "The image shows a flooded street or outdoor area with standing water surrounding multiple vehicles, indicating a significant flood hazard.",
+    "confidence": 0.85,
+    "limitations": "Water depth and current speed cannot be precisely determined from the overhead view, and the status of individuals or vehicles cannot be fully verified due to low resolution.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "image_hash": "7d0d980ff9bfdd5d36071f8c2d970e00291771edde16c15d16e258fdf982322e",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D4_T1.png",
+    "drone_id": "D4",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural collapse",
+      "widespread debris",
+      "unstable building remnants"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.719,
+    "explanation": "The image shows a structure with severe damage and extensive debris scattered across the area, indicating a major structural collapse.",
+    "confidence": 0.95,
+    "limitations": "It is not possible to determine from the image whether any people are trapped or injured inside the debris.",
+    "analysis_source": "gemini"
+  }
+}

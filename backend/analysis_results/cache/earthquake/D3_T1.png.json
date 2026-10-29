@@ -1,0 +1,23 @@
+{
+  "image_hash": "56763c77a0ea5d13132d8ac9e0d2d2e8040ba80273474dac1b5075274e02b6cc",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D3_T1.png",
+    "drone_id": "D3",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "Active structure fire",
+      "Smoke emissions from building roof and interior",
+      "Severe fire damage to the roof and walls of a residential building"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.9048,
+    "explanation": "An aerial view shows a residential building actively on fire with heavy smoke billowing from the roof structure and significant charring visible.",
+    "confidence": 0.95,
+    "limitations": "Exact interior conditions, presence of trapped individuals inside, and the full extent of structural compromise cannot be confirmed from the exterior aerial view alone.",
+    "analysis_source": "gemini"
+  }
+}

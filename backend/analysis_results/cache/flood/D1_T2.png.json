@@ -1,0 +1,23 @@
+{
+  "image_hash": "c095034e53c5ee07b63bf8ca5e3a677e04470e492bf49fa694f153a78ac489bf",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D1_T2.png",
+    "drone_id": "D1",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "extensive flooding covering roads and surrounding areas",
+      "partially submerged buildings and structures",
+      "standing water surrounding utility poles and trees"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6473,
+    "explanation": "An aerial view shows widespread flooding covering streets and surrounding properties up to the lower levels of several buildings, presenting a significant environmental hazard.",
+    "confidence": 0.95,
+    "limitations": "Exact depth of the water, structural integrity of the flooded buildings, and status of individuals cannot be definitively established from the visual evidence alone.",
+    "analysis_source": "gemini"
+  }
+}

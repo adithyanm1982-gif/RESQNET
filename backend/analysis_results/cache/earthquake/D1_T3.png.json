@@ -1,0 +1,23 @@
+{
+  "image_hash": "093798457750660d669543927658e856350fb1a12a48179265112a2052090ce2",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D1_T3.png",
+    "drone_id": "D1",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "heavy debris field",
+      "structural collapse",
+      "unidentified elevated ladder or boom structure spraying water"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6932,
+    "explanation": "The image shows a large pile of dark debris and wreckage with an extended boom or ladder structure directing a water spray into the area, indicating a significant structural incident or fire response.",
+    "confidence": 0.85,
+    "limitations": "The precise nature of the incident, the stability of surrounding structures, and the presence or status of any individuals cannot be fully verified due to low resolution and heavy shadowing or blurriness.",
+    "analysis_source": "gemini"
+  }
+}

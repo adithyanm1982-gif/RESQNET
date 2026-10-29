@@ -1,0 +1,22 @@
+{
+  "image_hash": "2bfb510660dff81e52d9097888c752cb51862e0398925ecf5d8ab80aed965501",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D3_T2.png",
+    "drone_id": "D3",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural collapse",
+      "widespread debris"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6598,
+    "explanation": "Aerial view shows a heavily damaged or collapsed structure surrounded by significant debris and scattered small figures resembling people.",
+    "confidence": 0.85,
+    "limitations": "The exact condition of the figures and the structural stability of the remaining parts are uncertain from this angle.",
+    "analysis_source": "gemini"
+  }
+}

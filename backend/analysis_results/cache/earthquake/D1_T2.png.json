@@ -1,0 +1,22 @@
+{
+  "image_hash": "ddfd4cbfdd579917da96e58b45b9263990626ca1a99d75abcbde4a199873e420",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D1_T2.png",
+    "drone_id": "D1",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural collapse of building roof and interior",
+      "debris scattered around the site"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6101,
+    "explanation": "An aerial view shows a building with a severely collapsed roof and structural failure, surrounded by debris and vehicles nearby.",
+    "confidence": 0.9,
+    "limitations": "The exact internal status and the presence of trapped individuals inside the collapsed structure cannot be definitively confirmed from the aerial visual alone.",
+    "analysis_source": "gemini"
+  }
+}

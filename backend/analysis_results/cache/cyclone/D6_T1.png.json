@@ -1,0 +1,23 @@
+{
+  "image_hash": "5cf5f9c41af639a73e33c80350f41ac1b25cca6ccfc58387cd3d92ee04574098",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D6_T1.png",
+    "drone_id": "D6",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural fire with heavy smoke",
+      "partially collapsed roof structure",
+      "burned building exterior"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8137,
+    "explanation": "An aerial view shows a residential building actively on fire with heavy smoke, visible flame damage, and structural compromise of the roof.",
+    "confidence": 0.95,
+    "limitations": "The interior status and presence of trapped individuals cannot be fully verified from the exterior aerial perspective.",
+    "analysis_source": "gemini"
+  }
+}

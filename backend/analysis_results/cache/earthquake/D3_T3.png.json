@@ -1,0 +1,22 @@
+{
+  "image_hash": "5ec295c9903f80a228fcaa32f4fcae9b6b521aba234c8a6bb9f2f2cff69578bd",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D3_T3.png",
+    "drone_id": "D3",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "heavy structural debris",
+      "numerous small figures and artifacts overlaid on the image"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7514,
+    "explanation": "The image shows a large area of heavy structural debris and wreckage, interspersed with numerous small figure-like cutouts or artifacts. Due to the chaotic nature of the scene and potential digital alterations or artifacts, structural instability is the primary visible hazard.",
+    "confidence": 0.85,
+    "limitations": "The scale, exact nature of the debris, and the identity or reality of the small figures overlaid on the image cannot be definitively established from the visual evidence alone.",
+    "analysis_source": "gemini"
+  }
+}

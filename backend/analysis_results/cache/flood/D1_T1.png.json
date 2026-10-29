@@ -1,0 +1,23 @@
+{
+  "image_hash": "f99b756c0f78579b574312075f260def0c75cab0463256432aec9d26849c53b5",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D1_T1.png",
+    "drone_id": "D1",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "widespread flooding covering terrain and structures",
+      "partially submerged railway tracks or elevated structure",
+      "various small figures and objects scattered across the flooded landscape"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6117,
+    "explanation": "Aerial view showing extensive flooding covering a large area, including trees, buildings, and transportation infrastructure, indicating a significant emergency situation.",
+    "confidence": 0.9,
+    "limitations": "Exact depth of floodwaters, structural stability of buildings and tracks, and the status of any individuals or objects visible in the scene cannot be precisely determined from the image alone.",
+    "analysis_source": "gemini"
+  }
+}

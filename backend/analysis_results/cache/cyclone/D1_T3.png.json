@@ -1,0 +1,23 @@
+{
+  "image_hash": "9b1e2d9b2288f3222b5174e09a0b69e1fa8675273486284c1bd6a965383cfa03",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D1_T3.png",
+    "drone_id": "D1",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "structural collapse of building section",
+      "damaged railway infrastructure and derailed train cars",
+      "snow and ice accumulation on ground and structures"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8102,
+    "explanation": "The image shows a major structural collapse involving a multi-level building over railway tracks, with collapsed framing, debris, and derailed train cars visible below.",
+    "confidence": 0.95,
+    "limitations": "Exact status of individuals or potential casualties cannot be verified strictly from the visual data alone.",
+    "analysis_source": "gemini"
+  }
+}

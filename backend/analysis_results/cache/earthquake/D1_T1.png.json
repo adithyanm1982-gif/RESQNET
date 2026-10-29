@@ -1,0 +1,22 @@
+{
+  "image_hash": "3262810790ef7a57c0adb30027b8d7dc6fb5047c0217d2338a1801750fe13f4a",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D1_T1.png",
+    "drone_id": "D1",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "collapsed or damaged building structure",
+      "debris field in parking area"
+    ],
+    "priority_level": 3,
+    "priority_label": "high",
+    "simulated_risk_score": 0.4533,
+    "explanation": "An aerial view shows a damaged or collapsed building structure next to a parking lot containing debris. Numerous small collaged figures are scattered across the scene, though their context and reality are ambiguous.",
+    "confidence": 0.85,
+    "limitations": "The image contains heavily compressed or collaged artifacts and numerous small figures whose exact nature, scale, and function are unclear.",
+    "analysis_source": "gemini"
+  }
+}

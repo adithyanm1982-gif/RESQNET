@@ -1,0 +1,22 @@
+{
+  "image_hash": "4d150d192914655dbb080ab4e7be2603df0f338062020a455e33abf1b86f2e1a",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D4_T3.png",
+    "drone_id": "D4",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "flooded roadway",
+      "vehicles surrounded by water"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7311,
+    "explanation": "An aerial or elevated view shows a street substantially covered in water surrounding multiple vehicles, indicating potential flooding conditions.",
+    "confidence": 0.85,
+    "limitations": "Water depth, exact extent of the flood, and current status or safety of individuals visible in the image cannot be precisely determined.",
+    "analysis_source": "gemini"
+  }
+}

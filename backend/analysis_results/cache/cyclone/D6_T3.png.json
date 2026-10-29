@@ -1,0 +1,23 @@
+{
+  "image_hash": "20494b382fd2194845f1293629b3bbcb6a28387eb670e547cd8819eac2e6cbb0",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D6_T3.png",
+    "drone_id": "D6",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "extensive building collapse",
+      "structural instability",
+      "debris field"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8452,
+    "explanation": "The image shows an extensive building collapse with widespread structural destruction and a massive debris field, strongly supporting an immediate, potentially life-threatening emergency.",
+    "confidence": 0.95,
+    "limitations": "The precise stability of remaining structures and the status of any individuals present cannot be fully established from the aerial visual evidence alone.",
+    "analysis_source": "gemini"
+  }
+}

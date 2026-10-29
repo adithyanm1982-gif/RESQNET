@@ -1,0 +1,23 @@
+{
+  "image_hash": "f93377bec6572953ddefe69866ceef00afbd925ec5e6204c0b072f7802cb1a7c",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D6_T2.png",
+    "drone_id": "D6",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "major structural collapse of a building section",
+      "damaged railway infrastructure and derailed/damaged trains",
+      "snow and ice accumulation on ground and structures"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8408,
+    "explanation": "The image clearly shows a catastrophic structural collapse involving a large building and railway area, with visible debris blocking tracks and potential immediate danger to anyone in the vicinity.",
+    "confidence": 0.95,
+    "limitations": "Exact casualty count, status of individuals, and complete structural integrity of remaining sections cannot be determined from visual evidence alone.",
+    "analysis_source": "gemini"
+  }
+}

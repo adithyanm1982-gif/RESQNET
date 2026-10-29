@@ -1,0 +1,22 @@
+{
+  "image_hash": "10702322ec7a8f5d5e40ede6300b7d4ff8eb28163adb3c9aae5e9a749606f397",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D2_T1.png",
+    "drone_id": "D2",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "collapsed or damaged single-story building structure",
+      "debris surrounding the collapsed structure"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6057,
+    "explanation": "An aerial view shows a building with severe structural collapse or damage, surrounded by debris, near a parking lot and swimming pools. Numerous small figures are digitally overlaid across the image.",
+    "confidence": 0.85,
+    "limitations": "The image contains multiple digital insertions of small figures that do not appear to be part of the actual scene. Details of casualties or active hazards inside the structure are unclear due to resolution and obstruction.",
+    "analysis_source": "gemini"
+  }
+}

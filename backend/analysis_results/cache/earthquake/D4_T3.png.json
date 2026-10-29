@@ -1,0 +1,23 @@
+{
+  "image_hash": "cd0c533423a22d46c976df5db51a8a7364d53fd48b990599b7c0dbf87df081f8",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D4_T3.png",
+    "drone_id": "D4",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "extensive roof collapse",
+      "exposed structural framing",
+      "structural instability"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6969,
+    "explanation": "An aerial view shows a major structural collapse of a building roof, leaving the interior frame exposed and creating significant structural hazards.",
+    "confidence": 0.95,
+    "limitations": "The interior state of the building and the presence of any trapped individuals cannot be visually verified from this angle.",
+    "analysis_source": "gemini"
+  }
+}

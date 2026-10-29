@@ -1,0 +1,22 @@
+{
+  "image_hash": "eb26f994e0e5bb22290d8af71f2a3bf1a61b5b1c25a4841007289e63eeeb16ab",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D6_T3.png",
+    "drone_id": "D6",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "floodwaters covering a roadway and surrounding terrain",
+      "vehicles surrounded by water"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.691,
+    "explanation": "An aerial view shows muddy floodwaters submerging a road with multiple vehicles and several small figures scattered throughout the area.",
+    "confidence": 0.85,
+    "limitations": "The exact depth of the water and the status or exact nature of the small figures cannot be definitively determined from the aerial view.",
+    "analysis_source": "gemini"
+  }
+}

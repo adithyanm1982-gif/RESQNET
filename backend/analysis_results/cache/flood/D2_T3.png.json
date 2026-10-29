@@ -1,0 +1,23 @@
+{
+  "image_hash": "bfacf14b080aedda0f71d0ac8177ecaa691440093159af7f2c8f5c2b5fd92274",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D2_T3.png",
+    "drone_id": "D2",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "widespread flooding surrounding houses and trees",
+      "partially submerged vehicles near a building",
+      "overhead utility lines crossing flooded areas"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6453,
+    "explanation": "An aerial view shows significant flooding inundating residential properties, roads, and trees. Several houses are surrounded by high water levels, and partially submerged cars are visible near one of the structures, indicating a severe flood hazard affecting infrastructure.",
+    "confidence": 0.95,
+    "limitations": "The depth of the water across all areas cannot be precisely measured from the aerial perspective, and the interior condition of the flooded buildings is not visible.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "image_hash": "ba683ccfb931061d6078adb759599885236b10241a160670b6c7f4744c10ac79",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D3_T3.png",
+    "drone_id": "D3",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "flooded roadway",
+      "vehicles driving through deep water",
+      "possible digitally altered or overlaid small figures scattered across the image"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6759,
+    "explanation": "The image shows a heavily flooded street with vehicles navigating through deep water, presenting a significant hazard. Additionally, there are numerous strange, tiny figures digitally superimposed over the scene, creating visual ambiguity.",
+    "confidence": 0.85,
+    "limitations": "The image appears heavily edited or artificially altered with numerous small extraneous graphical artifacts and figures, making precise identification of specific details difficult.",
+    "analysis_source": "gemini"
+  }
+}

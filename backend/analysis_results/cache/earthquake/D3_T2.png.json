@@ -1,0 +1,23 @@
+{
+  "image_hash": "3c677ff1dbafc7c1bd86b4322c15be63e950b92b07c1a6f114e5c16b0afd91ee",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D3_T2.png",
+    "drone_id": "D3",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural collapse or debris field",
+      "smoke or steam emission",
+      "overhead utility lines"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7047,
+    "explanation": "The image shows a heavily damaged structure or debris field with visible smoke and overhead lines, suggesting an active emergency situation requiring urgent assessment.",
+    "confidence": 0.85,
+    "limitations": "The image quality is blurry and low-resolution, making it difficult to distinguish specific details, exact structural damage types, or the presence of individuals with certainty.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "image_hash": "312ce28f16f4e58758ebe6fdfbc6658883e1ab0059b1db82bc09611f81fd30cc",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D4_T2.png",
+    "drone_id": "D4",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "widespread flooding covering roads and surrounding areas",
+      "numerous small figures resembling people scattered across flooded zones"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7304,
+    "explanation": "An aerial view shows extensive flooding affecting residential areas and roadways, with several small figures visible in or near the floodwaters, indicating a significant emergency situation.",
+    "confidence": 0.85,
+    "limitations": "The exact status, safety, or identities of the small figures cannot be definitively determined from this altitude and image resolution.",
+    "analysis_source": "gemini"
+  }
+}

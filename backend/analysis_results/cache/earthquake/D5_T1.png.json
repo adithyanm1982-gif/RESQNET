@@ -1,0 +1,23 @@
+{
+  "image_hash": "fe5dd80d3674e6a67e41bafaba8340a1314e2738b194e7f058d9ae2a8f503d35",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D5_T1.png",
+    "drone_id": "D5",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "major structural collapse of an elevated walkway/building section",
+      "partially derailed or damaged train cars visible near the collapsed structure",
+      "surface covered in white material (snow or debris), potential slip hazards"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8015,
+    "explanation": "The image clearly shows a catastrophic structural collapse of a building section over railway tracks, with derailed trains and heavy debris, indicating a severe emergency.",
+    "confidence": 0.95,
+    "limitations": "Exact status of people, casualties, or trapped individuals cannot be definitively verified from the image alone due to resolution and distance.",
+    "analysis_source": "gemini"
+  }
+}

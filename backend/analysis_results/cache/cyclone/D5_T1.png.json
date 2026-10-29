@@ -1,0 +1,22 @@
+{
+  "image_hash": "685da12d2961b534431d3e083b845dfe2aac66b89cc9e3f79ec40579f5e25e95",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D5_T1.png",
+    "drone_id": "D5",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural fire with visible smoke",
+      "damaged roof and building structure"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8354,
+    "explanation": "An aerial view shows a residential building experiencing an active fire with heavy smoke rising from the roof and significant structural damage.",
+    "confidence": 0.95,
+    "limitations": "The interior status and potential presence of occupants inside cannot be fully verified from the aerial view.",
+    "analysis_source": "gemini"
+  }
+}

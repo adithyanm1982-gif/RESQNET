@@ -1,0 +1,22 @@
+{
+  "image_hash": "95351c426584efca8099df2f3bd53a4e1b4ca0f63faf4cebce44b67fba7efc3c",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D4_T1.png",
+    "drone_id": "D4",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "damaged structure with visible debris and partial collapse",
+      "numerous figures superimposed across the image scene"
+    ],
+    "priority_level": 3,
+    "priority_label": "high",
+    "simulated_risk_score": 0.5385,
+    "explanation": "The image shows a building with visible structural damage and surrounding debris. Multiple small, potentially edited-in human figures and artifacts are scattered across the scene, creating visual anomalies.",
+    "confidence": 0.75,
+    "limitations": "The image appears to contain digital manipulations or artifacts with numerous small figures overlaid, making precise structural assessment and hazard identification uncertain.",
+    "analysis_source": "gemini"
+  }
+}

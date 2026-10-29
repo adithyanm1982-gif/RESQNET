@@ -1,0 +1,22 @@
+{
+  "image_hash": "fa01893e856f4d2f6c331536065a63786328cac5eb84b3bdf1780f6142ff3481",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D4_T1.png",
+    "drone_id": "D4",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "extensive flooding surrounding residential buildings",
+      "people-like figures standing on rooftops and elevated structures in a flooded area"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6773,
+    "explanation": "The image shows a severe flooding scenario where residential buildings are surrounded by deep water, and multiple figures appear stranded on rooftops or elevated areas.",
+    "confidence": 0.85,
+    "limitations": "The exact condition of the individuals, whether real people or artifacts/composites, and the presence of underlying structural damages cannot be definitively verified from the image alone.",
+    "analysis_source": "gemini"
+  }
+}

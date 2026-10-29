@@ -1,0 +1,22 @@
+{
+  "image_hash": "3cca5d1ce1b9f4e42689287be7e1599452a379193587b34b6ea3a540731ce37b",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D2_T1.png",
+    "drone_id": "D2",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "Active structure fire with visible smoke",
+      "Severe structural damage to the roof and upper levels of a building"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8514,
+    "explanation": "An aerial view shows a residential building actively on fire with heavy smoke and significant roof collapse. Water is being sprayed onto the structure, indicating active emergency response.",
+    "confidence": 0.95,
+    "limitations": "The interior status and exact occupancy of the building cannot be determined from the aerial perspective.",
+    "analysis_source": "gemini"
+  }
+}

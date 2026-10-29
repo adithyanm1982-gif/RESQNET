@@ -1,0 +1,24 @@
+{
+  "image_hash": "6301999cd43c6a4e7e5a1850792e1c3710f35fe27111c90c2f9a513f2407553b",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D6_T1.png",
+    "drone_id": "D6",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural collapse of a building section",
+      "collapsed or damaged overpass/walkway structure",
+      "train and railway tracks involved in the collapse zone",
+      "snow or ice covering the ground and surrounding area"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8421,
+    "explanation": "The image shows a major structural collapse involving a building, walkways, and railway infrastructure with trains present, indicating a severe emergency situation with potential casualties and immediate life-threatening hazards.",
+    "confidence": 0.9,
+    "limitations": "Exact number of people, casualties, structural stability of remaining portions, and interior status of the collapsed structures cannot be definitively established from the overhead visual alone.",
+    "analysis_source": "gemini"
+  }
+}

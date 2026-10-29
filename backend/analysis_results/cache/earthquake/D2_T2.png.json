@@ -1,0 +1,23 @@
+{
+  "image_hash": "0e7c13275a52226f7802d726a1673d2f548a73f6e2a43b10efbd8fab777c455a",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D2_T2.png",
+    "drone_id": "D2",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural damage to building roof and facade",
+      "debris on street level",
+      "presence of low-resolution figures resembling people near damaged areas"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7339,
+    "explanation": "The image shows a building with visible structural damage and debris scattered around the ground level, suggesting a structural collapse or significant incident.",
+    "confidence": 0.8,
+    "limitations": "Image resolution is low, figures are heavily pixelated and appear digitally inserted or artifacted, and the exact current status of any individuals cannot be reliably determined.",
+    "analysis_source": "gemini"
+  }
+}

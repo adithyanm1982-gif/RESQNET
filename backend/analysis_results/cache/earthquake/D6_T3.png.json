@@ -1,0 +1,22 @@
+{
+  "image_hash": "6912cd1fc90148e3c296896b573c4fad2b413c830187e0e0a80d1d221fad16f6",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D6_T3.png",
+    "drone_id": "D6",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "structural collapse of building roof",
+      "debris surrounding the structure"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7037,
+    "explanation": "The image shows a heavily damaged building with a collapsed roof and scattered debris. Multiple small figures resembling humans are visible around the structure, indicating potential presence in a hazardous zone.",
+    "confidence": 0.85,
+    "limitations": "The image resolution is low, making it difficult to determine if the figures are actual people, their status, or whether the building is currently occupied.",
+    "analysis_source": "gemini"
+  }
+}

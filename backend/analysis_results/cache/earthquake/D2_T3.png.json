@@ -1,0 +1,22 @@
+{
+  "image_hash": "24fe1e5f54644b6691ca7c25ad96e80ba8bb7d491bc409225f60f0238990aab4",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D2_T3.png",
+    "drone_id": "D2",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "collapsed or heavily damaged structure with debris",
+      "numerous small figures scattered throughout the scene"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7337,
+    "explanation": "The image shows severe structural collapse with extensive debris and multiple small figure overlays scattered across the wreckage, suggesting a major disaster site.",
+    "confidence": 0.85,
+    "limitations": "The scale, exact nature of the damage, and the true status of the small figures are unclear due to digital manipulation or resolution constraints.",
+    "analysis_source": "gemini"
+  }
+}

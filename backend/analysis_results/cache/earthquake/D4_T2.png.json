@@ -1,0 +1,23 @@
+{
+  "image_hash": "dee5131574c079f2d11c34e497e1cdaa3179c5ee182afa7de88be9d883844825",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D4_T2.png",
+    "drone_id": "D4",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural collapse or heavy debris pile",
+      "smoke or dust obscuring the scene",
+      "potential high-angle fall hazards near edges"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6134,
+    "explanation": "The image shows a large area of heavy rubble and structural debris accompanied by smoke or dust, indicating a severe disaster site with significant physical destruction.",
+    "confidence": 0.85,
+    "limitations": "The image quality is low and blurry, making it difficult to precisely identify specific materials, structural integrity, or the status of any individuals present in the scene.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "image_hash": "7703da8f2391579fa4c82db0aca774f72675525c6e8a87f971b4e5a8989c725d",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D5_T3.png",
+    "drone_id": "D5",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "Collapsed and heavily damaged multi-story buildings",
+      "Widespread structural debris covering the ground area",
+      "Dust or smoke plume rising from the rubble"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.8032,
+    "explanation": "Aerial view shows extensive structural collapse of buildings with massive piles of debris and dust, indicating a severe disaster event with potential life-threatening conditions.",
+    "confidence": 0.95,
+    "limitations": "Exact status of individuals, interior conditions, and structural stability of remaining portions cannot be verified from the overhead image.",
+    "analysis_source": "gemini"
+  }
+}

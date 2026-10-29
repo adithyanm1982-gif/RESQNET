@@ -1,0 +1,22 @@
+{
+  "image_hash": "2feaaf94e17c8915f38fdd806b805d43fb0c387a4de9213df67cf76667a932e7",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D5_T2.png",
+    "drone_id": "D5",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "Deep floodwaters surrounding a pickup truck",
+      "Multiple small figures resembling people standing in or near the water around the vehicle"
+    ],
+    "priority_level": 5,
+    "priority_label": "life_threatening",
+    "simulated_risk_score": 0.7973,
+    "explanation": "A pickup truck is surrounded by deep, flowing floodwaters, with numerous small figures resembling people positioned in and around the water near the vehicle, indicating an immediate, potentially life-threatening emergency.",
+    "confidence": 0.9,
+    "limitations": "The figures surrounding the vehicle are very small and digitally altered or inserted into the image, making their exact identities and actual physical status uncertain, though the flood hazard itself is clearly visible.",
+    "analysis_source": "gemini"
+  }
+}

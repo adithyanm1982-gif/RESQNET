@@ -1,0 +1,22 @@
+{
+  "image_hash": "f48b113494abb90a7f27429fb860d6e4c253629fbe0ba4bc7c86053802c296b9",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D6_T2.png",
+    "drone_id": "D6",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "structural collapse or heavy debris pile",
+      "extended aerial ladder spraying water"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6395,
+    "explanation": "The image shows an extended aerial ladder operating over a large pile of dark, chaotic debris, likely indicating a major structural collapse or industrial incident requiring emergency response.",
+    "confidence": 0.85,
+    "limitations": "The exact nature of the underlying incident, potential casualties, and specific structural stability cannot be definitively determined from this aerial view alone.",
+    "analysis_source": "gemini"
+  }
+}

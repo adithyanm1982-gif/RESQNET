@@ -1,0 +1,22 @@
+{
+  "image_hash": "a6b54498254fb9422d18ad48391e682658e8c7c0b1655d0d7a2bfbbbd195a467",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D2_T2.png",
+    "drone_id": "D2",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "extensive structural fire damage and collapsed buildings",
+      "burned debris and wreckage"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6308,
+    "explanation": "Aerial view shows severe structural destruction and fire damage across residential properties, with visible debris and responders in the area.",
+    "confidence": 0.95,
+    "limitations": "Exact status of occupants and whether fires are fully extinguished cannot be definitively confirmed from the overhead imagery.",
+    "analysis_source": "gemini"
+  }
+}

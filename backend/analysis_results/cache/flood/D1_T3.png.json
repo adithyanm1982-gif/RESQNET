@@ -1,0 +1,23 @@
+{
+  "image_hash": "2259982b25f18d4db119f06fb4e64feae32ca78773f0307f348e89c56e0feac9",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D1_T3.png",
+    "drone_id": "D1",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "flooded area with muddy water",
+      "vehicle driving through deep water",
+      "multiple small figures scattered across the flooded area"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6552,
+    "explanation": "The image shows a vehicle navigating through deep, muddy floodwaters with numerous small figures present in and around the flooded environment, indicating a significant flood hazard.",
+    "confidence": 0.85,
+    "limitations": "The scale and exact nature of the small figures are unclear due to resolution and composition; injuries or immediate distress of individuals cannot be definitively confirmed.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "image_hash": "a3fdda3fa8dbf43ee3aa1229669c2e26f7a7dc186a8b08f45659b0aef8d10a53",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D5_T1.png",
+    "drone_id": "D5",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "extensive flooding surrounding residential buildings",
+      "people standing on rooftops"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6917,
+    "explanation": "An aerial view shows widespread flooding inundating a residential neighborhood, with floodwaters surrounding single-story buildings and multiple figures visible on rooftops.",
+    "confidence": 0.95,
+    "limitations": "Individual medical conditions and exact water depth cannot be precisely measured from the aerial image.",
+    "analysis_source": "gemini"
+  }
+}

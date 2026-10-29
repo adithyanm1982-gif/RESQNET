@@ -1,0 +1,22 @@
+{
+  "image_hash": "d8c8ae3f6783bb9de0477ae66aa1dc25b35586debe083722523fa4d56eafcadd",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "earthquake",
+    "filename": "D5_T3.png",
+    "drone_id": "D5",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "structural collapse of building roof",
+      "exposed structural framing and debris"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.7197,
+    "explanation": "An aerial view shows a major structural collapse of a building roof with visible debris and exposed framing, along with numerous figures present around the site.",
+    "confidence": 0.9,
+    "limitations": "Exact stability of the remaining structure, status of interior spaces, and condition of individuals cannot be fully verified from the image alone.",
+    "analysis_source": "gemini"
+  }
+}

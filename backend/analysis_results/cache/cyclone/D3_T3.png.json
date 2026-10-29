@@ -1,0 +1,22 @@
+{
+  "image_hash": "586768656c0cce91665581e501231ca16d0578bbaa12adaa423cf1895aae72f4",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D3_T3.png",
+    "drone_id": "D3",
+    "timeframe": "T3",
+    "visible_hazards": [
+      "Significantly burned or collapsed building structure",
+      "Smoke or residual fire effects"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6261,
+    "explanation": "The image shows an aerial view of a house with extensive structural damage, severe charring, and a partially collapsed roof indicative of a major fire event.",
+    "confidence": 0.9,
+    "limitations": "The exact current status of the fire and the condition of any individuals cannot be fully verified from the static image alone.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "image_hash": "ccb4a4d08b8dd0979f240187b03832256f0b0664ba6b7da967f8c9071d1d2c3c",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "cyclone",
+    "filename": "D1_T1.png",
+    "drone_id": "D1",
+    "timeframe": "T1",
+    "visible_hazards": [
+      "structural collapse of a building",
+      "structural damage and debris"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6801,
+    "explanation": "The image shows a building with significant structural damage and partial collapse near a parking lot and a swimming pool area. Multiple small figures are visible around the site, though details are unclear due to low image resolution.",
+    "confidence": 0.85,
+    "limitations": "The image resolution is low, making it difficult to determine the exact cause of the structural damage, the status of any individuals present, or if active hazards like fire or gas leaks persist.",
+    "analysis_source": "gemini"
+  }
+}

@@ -1,0 +1,322 @@
+{
+  "scenario": "cyclone",
+  "images_discovered": 18,
+  "images_selected": 18,
+  "successful_count": 18,
+  "failed_count": 0,
+  "successful_results": [
+    {
+      "scenario": "cyclone",
+      "filename": "D1_T1.png",
+      "drone_id": "D1",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "structural collapse of a building",
+        "structural damage and debris"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6801,
+      "explanation": "The image shows a building with significant structural damage and partial collapse near a parking lot and a swimming pool area. Multiple small figures are visible around the site, though details are unclear due to low image resolution.",
+      "confidence": 0.85,
+      "limitations": "The image resolution is low, making it difficult to determine the exact cause of the structural damage, the status of any individuals present, or if active hazards like fire or gas leaks persist.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D1_T2.png",
+      "drone_id": "D1",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "Active structure fire with visible smoke and roof damage",
+        "Emergency response personnel on scene"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6054,
+      "explanation": "An aerial view shows a residential structure actively burning with visible roof collapse, extensive smoke, and multiple figures resembling firefighters operating on or near the building.",
+      "confidence": 0.95,
+      "limitations": "Exact interior conditions, structural stability status, and confirmation of any potential casualties cannot be fully determined from the aerial image.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D1_T3.png",
+      "drone_id": "D1",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "structural collapse of building section",
+        "damaged railway infrastructure and derailed train cars",
+        "snow and ice accumulation on ground and structures"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8102,
+      "explanation": "The image shows a major structural collapse involving a multi-level building over railway tracks, with collapsed framing, debris, and derailed train cars visible below.",
+      "confidence": 0.95,
+      "limitations": "Exact status of individuals or potential casualties cannot be verified strictly from the visual data alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D2_T1.png",
+      "drone_id": "D2",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "collapsed or damaged single-story building structure",
+        "debris surrounding the collapsed structure"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6057,
+      "explanation": "An aerial view shows a building with severe structural collapse or damage, surrounded by debris, near a parking lot and swimming pools. Numerous small figures are digitally overlaid across the image.",
+      "confidence": 0.85,
+      "limitations": "The image contains multiple digital insertions of small figures that do not appear to be part of the actual scene. Details of casualties or active hazards inside the structure are unclear due to resolution and obstruction.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D2_T2.png",
+      "drone_id": "D2",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "extensive structural fire damage and collapsed buildings",
+        "burned debris and wreckage"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6308,
+      "explanation": "Aerial view shows severe structural destruction and fire damage across residential properties, with visible debris and responders in the area.",
+      "confidence": 0.95,
+      "limitations": "Exact status of occupants and whether fires are fully extinguished cannot be definitively confirmed from the overhead imagery.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D2_T3.png",
+      "drone_id": "D2",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "structure fire",
+        "severe structural damage to building roof and interior",
+        "smoke emission"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8597,
+      "explanation": "Aerial view shows a residential building with extensive fire and structural damage, collapsed roof sections, and visible smoke, indicating an active or recently active life-threatening structural fire.",
+      "confidence": 0.95,
+      "limitations": "Exact status of occupants, precise interior conditions, and whether the fire is fully extinguished cannot be confirmed from the aerial image alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D3_T1.png",
+      "drone_id": "D3",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "structural damage to a building",
+        "numerous small extraneous digital artifacts or collaged figures distributed across the image"
+      ],
+      "priority_level": 3,
+      "priority_label": "high",
+      "simulated_risk_score": 0.5718,
+      "explanation": "The image shows a building with visible structural damage or collapse, surrounded by debris and an area resembling a parking lot and a pool. Numerous small, collaged figure-like artifacts are scattered across the scene.",
+      "confidence": 0.85,
+      "limitations": "The image quality is low and heavily edited with collaged artifacts, making precise assessment of current conditions and hazards difficult.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D3_T2.png",
+      "drone_id": "D3",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "structural collapse",
+        "widespread debris"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6598,
+      "explanation": "Aerial view shows a heavily damaged or collapsed structure surrounded by significant debris and scattered small figures resembling people.",
+      "confidence": 0.85,
+      "limitations": "The exact condition of the figures and the structural stability of the remaining parts are uncertain from this angle.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D3_T3.png",
+      "drone_id": "D3",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "Significantly burned or collapsed building structure",
+        "Smoke or residual fire effects"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6261,
+      "explanation": "The image shows an aerial view of a house with extensive structural damage, severe charring, and a partially collapsed roof indicative of a major fire event.",
+      "confidence": 0.9,
+      "limitations": "The exact current status of the fire and the condition of any individuals cannot be fully verified from the static image alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D4_T1.png",
+      "drone_id": "D4",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "damaged structure with visible debris and partial collapse",
+        "numerous figures superimposed across the image scene"
+      ],
+      "priority_level": 3,
+      "priority_label": "high",
+      "simulated_risk_score": 0.5385,
+      "explanation": "The image shows a building with visible structural damage and surrounding debris. Multiple small, potentially edited-in human figures and artifacts are scattered across the scene, creating visual anomalies.",
+      "confidence": 0.75,
+      "limitations": "The image appears to contain digital manipulations or artifacts with numerous small figures overlaid, making precise structural assessment and hazard identification uncertain.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D4_T2.png",
+      "drone_id": "D4",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "structural collapse",
+        "building debris field"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.6486,
+      "explanation": "The image shows severe structural damage and a large debris field consistent with a collapsed building or disaster site, with multiple small figures scattered across the area.",
+      "confidence": 0.9,
+      "limitations": "Exact status of individuals, presence of trapped persons, and structural stability cannot be definitively confirmed from the aerial image alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D4_T3.png",
+      "drone_id": "D4",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "large dark scorch or burn marks on the roof and side of a large building",
+        "structural damage or staining on the exterior wall of the building"
+      ],
+      "priority_level": 3,
+      "priority_label": "high",
+      "simulated_risk_score": 0.5476,
+      "explanation": "The image shows a large industrial or aircraft hangar-style building with extensive dark discoloration and possible burn or fire damage on the roof and facade. Several small figures (appearing digitally inserted or collaged) are visible around the structure, but no active fire or immediate life-threatening emergency is actively displayed.",
+      "confidence": 0.85,
+      "limitations": "The image contains collaged or digitally altered small figures that are unclear in nature. It is uncertain whether the fire damage is active, historical, or part of a training exercise.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D5_T1.png",
+      "drone_id": "D5",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "structural fire with visible smoke",
+        "damaged roof and building structure"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8354,
+      "explanation": "An aerial view shows a residential building experiencing an active fire with heavy smoke rising from the roof and significant structural damage.",
+      "confidence": 0.95,
+      "limitations": "The interior status and potential presence of occupants inside cannot be fully verified from the aerial view.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D5_T2.png",
+      "drone_id": "D5",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "Collapsed building structure and debris field",
+        "Damaged roof with exposed rafters and holes"
+      ],
+      "priority_level": 4,
+      "priority_label": "critical",
+      "simulated_risk_score": 0.5987,
+      "explanation": "An aerial view shows severe structural damage to a building, with a collapsed section and scattered debris across the ground, indicating a major structural failure or disaster.",
+      "confidence": 0.9,
+      "limitations": "The exact cause of the structural collapse and the status of any individuals visible in or around the debris cannot be definitively confirmed from the image alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D5_T3.png",
+      "drone_id": "D5",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "Collapsed and heavily damaged multi-story buildings",
+        "Widespread structural debris covering the ground area",
+        "Dust or smoke plume rising from the rubble"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8032,
+      "explanation": "Aerial view shows extensive structural collapse of buildings with massive piles of debris and dust, indicating a severe disaster event with potential life-threatening conditions.",
+      "confidence": 0.95,
+      "limitations": "Exact status of individuals, interior conditions, and structural stability of remaining portions cannot be verified from the overhead image.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D6_T1.png",
+      "drone_id": "D6",
+      "timeframe": "T1",
+      "visible_hazards": [
+        "structural fire with heavy smoke",
+        "partially collapsed roof structure",
+        "burned building exterior"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8137,
+      "explanation": "An aerial view shows a residential building actively on fire with heavy smoke, visible flame damage, and structural compromise of the roof.",
+      "confidence": 0.95,
+      "limitations": "The interior status and presence of trapped individuals cannot be fully verified from the exterior aerial perspective.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D6_T2.png",
+      "drone_id": "D6",
+      "timeframe": "T2",
+      "visible_hazards": [
+        "major structural collapse of a building section",
+        "damaged railway infrastructure and derailed/damaged trains",
+        "snow and ice accumulation on ground and structures"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8408,
+      "explanation": "The image clearly shows a catastrophic structural collapse involving a large building and railway area, with visible debris blocking tracks and potential immediate danger to anyone in the vicinity.",
+      "confidence": 0.95,
+      "limitations": "Exact casualty count, status of individuals, and complete structural integrity of remaining sections cannot be determined from visual evidence alone.",
+      "analysis_source": "gemini"
+    },
+    {
+      "scenario": "cyclone",
+      "filename": "D6_T3.png",
+      "drone_id": "D6",
+      "timeframe": "T3",
+      "visible_hazards": [
+        "extensive building collapse",
+        "structural instability",
+        "debris field"
+      ],
+      "priority_level": 5,
+      "priority_label": "life_threatening",
+      "simulated_risk_score": 0.8452,
+      "explanation": "The image shows an extensive building collapse with widespread structural destruction and a massive debris field, strongly supporting an immediate, potentially life-threatening emergency.",
+      "confidence": 0.95,
+      "limitations": "The precise stability of remaining structures and the status of any individuals present cannot be fully established from the aerial visual evidence alone.",
+      "analysis_source": "gemini"
+    }
+  ],
+  "failed_results": []
+}

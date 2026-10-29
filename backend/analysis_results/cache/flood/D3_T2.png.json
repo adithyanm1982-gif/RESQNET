@@ -1,0 +1,22 @@
+{
+  "image_hash": "d47a395d49e16e192c27927adf3750d3b505630e582f570a1839847dfa088e5d",
+  "model": "gemini-3.5-flash-lite",
+  "prompt_version": "visual-evidence-v2",
+  "result": {
+    "scenario": "flood",
+    "filename": "D3_T2.png",
+    "drone_id": "D3",
+    "timeframe": "T2",
+    "visible_hazards": [
+      "widespread flooding covering streets and land areas",
+      "partially submerged structures and vegetation"
+    ],
+    "priority_level": 4,
+    "priority_label": "critical",
+    "simulated_risk_score": 0.6341,
+    "explanation": "The aerial view shows extensive flooding covering roads and surrounding properties, presenting a significant environmental hazard to infrastructure and potential occupants.",
+    "confidence": 0.95,
+    "limitations": "Exact depth of water and status of any individuals in the flooded area cannot be precisely determined from the visual evidence alone.",
+    "analysis_source": "gemini"
+  }
+}
