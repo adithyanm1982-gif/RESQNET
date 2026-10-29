@@ -126,7 +126,7 @@ tr.sevrow td:first-child{border-left:3px solid var(--cy)}tr.sevrow.error td:firs
 .pill.disconnected,.pill.bad{color:var(--r);border-color:var(--r-b);background:var(--r-a)}.pill.recovering,.pill.returning,.pill.warn{color:var(--am);border-color:var(--am-b);background:var(--am-a)}
 
 /* ===== Mission control ===== */
-.mc{display:grid;grid-template-columns:270px minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) 196px;gap:10px;height:100%;min-height:680px}
+.mc{display:grid;grid-template-columns:270px minmax(0,1fr) 280px;grid-template-rows:minmax(0,1fr) 230px;gap:10px;height:100%;min-height:680px}
 .col{display:flex;flex-direction:column;gap:10px;min-height:0}.col.scroll{overflow:auto}.col .fill{flex:1;min-height:0;overflow:auto}
 .dc{background:linear-gradient(180deg,var(--dcA),var(--dcB));border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;margin-bottom:8px;transition:.18s}
 .dc:hover{border-color:var(--line2);transform:translateX(2px)}.dc.sel{border-color:var(--cy);box-shadow:0 0 0 1px var(--cy) inset,0 0 22px var(--cy-a)}
@@ -176,8 +176,11 @@ tr.sevrow td:first-child{border-left:3px solid var(--cy)}tr.sevrow.error td:firs
 .claim-list{max-height:330px;overflow:auto;margin-top:8px;padding-right:3px}.claim-task{padding:8px 2px;border-top:1px solid var(--line);font-size:11px}.claim-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}.claim-state{font-size:9px;padding:2px 7px;border-radius:99px;border:1px solid var(--line2);color:var(--mut);text-transform:uppercase;letter-spacing:.5px}.claim-state.claimed{color:var(--cy);border-color:var(--cy-b);background:var(--cy-a)}.claim-state.complete{color:var(--g);border-color:var(--g-b);background:var(--g-a)}
 .claim-detail{font-size:10px;margin-top:4px;line-height:1.4}.claim-owners{margin-top:4px;line-height:1.45;overflow-wrap:anywhere}.claim-history{margin-top:5px;color:var(--am)}.claim-history summary{cursor:pointer;font-size:10px}.claim-empty{font-size:10px;margin:8px 0 0}
 .hybrid-strategy{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}.hybrid-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;font-size:10px}.hybrid-links span{display:flex;flex-direction:column;gap:3px}.hybrid-note{font-size:10px;line-height:1.4;margin:8px 0 0}.partition-groups,.hybrid-history{display:grid;gap:5px;margin-top:10px;font-size:10px}.partition-group{display:grid;grid-template-columns:auto auto 1fr;gap:6px;padding:5px 6px;border:1px solid var(--line);border-radius:7px;background:var(--panel3);align-items:center}.partition-group span:last-child{text-align:right;overflow-wrap:anywhere}.hybrid-history{border-top:1px solid var(--line);padding-top:8px}
-.bottom .card{overflow:auto;min-height:0}
-/* layout: right column spans both rows; the bottom row sits under the aircraft list + map */
+
+/* bottom row: Flight log (left) | Failure schedule (middle) | System status (right) */
+.bottom{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1.1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-auto-flow:row;gap:10px;min-height:0}
+.bottom .card{overflow:auto;min-height:0;min-width:0}
+/* layout: right column covers the top row only; the bottom row spans the full page width */
 .mc .col.scroll{grid-column:3;grid-row:1}
 .mc .bottom{grid-column:1/-1;grid-row:2}
 /* drone priority & flight path boxes (colour comes from --pc = hazard priority colour) */
@@ -195,7 +198,7 @@ tr.sevrow td:first-child{border-left:3px solid var(--cy)}tr.sevrow.error td:firs
 .cmpcard{border-top:3px solid var(--line2)}.cmpcard.best{border-top-color:var(--cy);box-shadow:0 0 28px var(--cy-a)}
 .best-c{color:var(--cy);font-weight:800;text-decoration:underline}
 .maplibregl-ctrl-scale{background:var(--glass);color:var(--tx);border-color:var(--tx)}
-@media(max-width:1100px){body{overflow:auto}.mc{grid-template-columns:1fr;grid-template-rows:auto;height:auto}.mc .col.scroll,.mc .bottom{grid-column:auto;grid-row:auto}.bottom{grid-template-columns:1fr}.mapbox{min-height:520px}.col .fill{max-height:420px}.app{height:auto;min-height:100%}main{overflow:visible}nav{overflow:auto;justify-content:flex-start}.top{flex-wrap:wrap;height:auto;padding:8px 14px;gap:10px}.grid2{grid-template-columns:1fr}.tb-c{top:60px}}
+@media(max-width:1100px){body{overflow:auto}.mc{grid-template-columns:1fr;grid-template-rows:auto;height:auto}.mc .col.scroll{grid-column:auto;grid-row:auto}.mc .bottom{grid-column:auto;grid-row:auto;grid-template-columns:repeat(3,minmax(0,1fr));height:260px}.mapbox{min-height:520px}.col .fill{max-height:420px}.app{height:auto;min-height:100%}main{overflow:visible}nav{overflow:auto;justify-content:flex-start}.top{flex-wrap:wrap;height:auto;padding:8px 14px;gap:10px}.grid2{grid-template-columns:1fr}.tb-c{top:60px}}
 
 /* ===== Battery level colours: High 60-100, Medium 30-59, Low 0-29 ===== */
 :root{--bat-hi:#6ee7b7;--bat-mid:#fcd34d;--bat-lo:#fca5a5;
