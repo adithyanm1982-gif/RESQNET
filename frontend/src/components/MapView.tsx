@@ -4,7 +4,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useStore } from '../store'
 import { cellPoly, center, toLngLat } from '../geo'
-import { batteryOf, dname, healthOf, rowsOf } from '../lib'
+import { batteryOf, dname, healthOf } from '../lib'
 import { droneSvg } from './Icons'
 import { api } from '../api'
 
@@ -71,6 +71,8 @@ type DronePin = {
   e: HTMLElement
 }
 
+type Pt = { x: number; y: number }
+
 const BACKEND_URL = (
   import.meta.env.VITE_BACKEND_URL || ''
 ).replace(/\/+$/, '')
@@ -113,6 +115,34 @@ function droneMarkerOffset(droneId: string): [number, number] {
   return offsets[key] ?? [0, 0]
 }
 
+// Extent of the projected grid quad along a scan line.
+// axis 'y': scan line y = v -> returns [minX, maxX]
+// axis 'x': scan line x = v -> returns [minY, maxY]
+function quadSpan(q: Pt[], axis: 'x' | 'y', v: number): [number, number] | null {
+  const key = axis === 'y' ? 'y' : 'x'
+  const other = axis === 'y' ? 'x' : 'y'
+  const vals = q.map((p) => p[key])
+  const vv = Math.min(Math.max(v, Math.min(...vals)), Math.max(...vals))
+  const hits: number[] = []
+
+  for (let i = 0; i < q.length; i++) {
+    const a = q[i]
+    const b = q[(i + 1) % q.length]
+    const a1 = a[key]
+    const b1 = b[key]
+
+    if ((a1 <= vv && vv <= b1) || (b1 <= vv && vv <= a1)) {
+      if (a1 === b1) {
+        hits.push(a[other], b[other])
+      } else {
+        hits.push(a[other] + ((vv - a1) * (b[other] - a[other])) / (b1 - a1))
+      }
+    }
+  }
+
+  return hits.length ? [Math.min(...hits), Math.max(...hits)] : null
+}
+
 function priorityColor(level: number): string {
   switch (level) {
     case 5:
@@ -134,13 +164,14 @@ function readableList(items: string[]): string {
 
 function createHazardPopupContent(
   hazard: HazardAnalysis,
+  maxHeight: number,
 ): HTMLElement {
   const root = document.createElement('div')
 
   root.style.cssText = [
     'width:280px',
     'max-width:280px',
-    'max-height:380px',
+    `max-height:${maxHeight}px`,
     'overflow:auto',
     'padding:8px',
     'box-sizing:border-box',
@@ -274,6 +305,7 @@ export default function MapView({
 
   const hazardsRef = useRef<HazardAnalysis[]>([])
   const popupRef = useRef<maplibregl.Popup | null>(null)
+  const fitRef = useRef<() => void>(() => {})
 
   const {
     run,
@@ -418,6 +450,10 @@ export default function MapView({
       'bottom-left',
     )
 
+    // Keep drone labels inside the 20x20 grid while zooming / panning / tilting.
+    m.on('move', () => fitRef.current())
+    m.on('resize', () => fitRef.current())
+
     m.on('load', () => {
       for (const source of ['cells', 'trails', 'tasks']) {
         m.addSource(source, {
@@ -512,6 +548,72 @@ export default function MapView({
       extra.current = []
     }
   }, [])
+
+  // Shift each drone marker (icon + label) so it stays fully inside the
+  // projected 20x20 grid. Presentation only: simulation coordinates and
+  // trails are untouched.
+  const fitPins = () => {
+    const m = map.current
+
+    if (!m || !ready.current || !run) return
+
+    const g = run.grid
+
+    const quad: Pt[] = [
+      toLngLat(0, 0),
+      toLngLat(g.width, 0),
+      toLngLat(g.width, g.height),
+      toLngLat(0, g.height),
+    ].map((ll: any) => m.project(ll))
+
+    const PAD = 2
+
+    for (const d of run.drones) {
+      const p = pins.current[d.drone_id]
+
+      if (!p) continue
+
+      const base = droneMarkerOffset(d.drone_id)
+      const c = m.project(toLngLat(d.x + 0.5, d.y + 0.5) as any)
+      const w = p.e.offsetWidth || 120
+      const h = p.e.offsetHeight || 34
+
+      // Marker anchor is 'left': the pin's left edge sits at point + offset.x,
+      // vertically centred on point + offset.y.
+      let left = c.x + base[0]
+      let top = c.y + base[1] - h / 2
+
+      for (let pass = 0; pass < 2; pass++) {
+        const r1 = quadSpan(quad, 'y', top)
+        const r2 = quadSpan(quad, 'y', top + h)
+
+        if (r1 && r2) {
+          const lo = Math.max(r1[0], r2[0]) + PAD
+          const hi = Math.min(r1[1], r2[1]) - PAD
+
+          left = hi - lo >= w
+            ? Math.min(Math.max(left, lo), hi - w)
+            : lo
+        }
+
+        const c1 = quadSpan(quad, 'x', left)
+        const c2 = quadSpan(quad, 'x', left + w)
+
+        if (c1 && c2) {
+          const lo = Math.max(c1[0], c2[0]) + PAD
+          const hi = Math.min(c1[1], c2[1]) - PAD
+
+          top = hi - lo >= h
+            ? Math.min(Math.max(top, lo), hi - h)
+            : lo
+        }
+      }
+
+      p.m.setOffset([left - c.x, top + h / 2 - c.y])
+    }
+  }
+
+  fitRef.current = fitPins
 
   const draw = () => {
     const m = map.current
@@ -635,16 +737,40 @@ export default function MapView({
           if (popupRef.current) popupRef.current.remove()
           popupRef.current = null
 
+          // Place the popup on the side of the drone with more room and cap
+          // its height so it always stays inside the map window.
+          const mm = map.current
+          const pt = mm.project(toLngLat(d.x + 0.5, d.y + 0.5) as any)
+          const box = mm.getContainer()
+          const W = box.clientWidth
+          const H = box.clientHeight
+          const margin = 8
+          const popW = 310
+
+          const above = pt.y - margin
+          const below = H - pt.y - margin
+          const vert = above > below ? 'bottom' : 'top'
+          const space = Math.max(above, below)
+          const maxH = Math.max(110, Math.min(380, space - 56))
+
+          const horiz =
+            pt.x < popW / 2 + margin
+              ? '-left'
+              : pt.x > W - popW / 2 - margin
+                ? '-right'
+                : ''
+
           const popup = new maplibregl.Popup({
             closeButton: true,
             closeOnClick: false,
             closeOnMove: false,
             maxWidth: '320px',
             offset: 18,
+            anchor: (vert + horiz) as any,
           })
             .setLngLat(toLngLat(d.x + 0.5, d.y + 0.5))
-            .setDOMContent(createHazardPopupContent(hazard))
-            .addTo(map.current)
+            .setDOMContent(createHazardPopupContent(hazard, maxH))
+            .addTo(mm)
 
           activePopup = popup
           popupRef.current = popup
@@ -729,6 +855,9 @@ export default function MapView({
         p.e.title = `${d.drone_id}: no saved priority data`
       }
     }
+
+    // Keep every drone marker + label inside the grid.
+    fitPins()
 
     extra.current.forEach((x) => x.remove())
     extra.current = []

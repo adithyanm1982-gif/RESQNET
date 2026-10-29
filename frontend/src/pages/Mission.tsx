@@ -115,15 +115,6 @@ export default function Mission() {
                 </div>)
             })}
           </div></div>
-        <div className="card"><h3>Failure schedule</h3>
-          {run.failure_schedule_type || run.failure_scenario_id
-            ? <><p className="mut">{run.failure_schedule_type === 'custom' ? 'Custom user-authored plan' : run.failure_scenario_id} · scheduled relative to mission start</p>
-              {!!run.failure_events?.length && <table><thead><tr><th>Event</th><th>Type</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>
-                {run.failure_events.map((event: any) => <tr key={event.id}><td className="mono">{event.id}</td><td>{event.type}</td><td className="mono">{event.start_s}s</td><td className="mono">{event.end_s == null ? 'never' : `${event.end_s}s`}</td><td>{event.status}</td></tr>)}
-              </tbody></table>}
-            </>
-            : <p className="mut">No failure schedule is installed for this run.</p>}
-          <p className="mut" style={{ fontSize: 10.5, margin: '8px 0 0' }}>An unresponsive drone is marked disconnected. Other event types show their lifecycle only; controller, partition, packet-loss, delay, battery, and no-fly effects are not simulated.</p></div>
         <div className="card"><h3>Mission status</h3>
           <div className="mono" style={{ lineHeight: 1.7, fontSize: 12 }}>Elapsed {mmss(run.tick * s.secPerTick)} · Remaining tasks {total - done}<br />Coverage {run.coverage.percentage}% ({run.coverage.visited_cells}/{run.coverage.traversable_cells})</div>
           <div className="meter"><i style={{ width: `${total ? (done / total) * 100 : 0}%`, background: 'var(--cy)' }} /></div>
@@ -180,6 +171,15 @@ export default function Mission() {
           <select className="sm" value={sF} onChange={(e) => setSF(e.target.value)}><option value="all">All severity</option><option value="info">Info</option><option value="warn">Warning</option><option value="error">Error</option></select>
           <select className="sm" value={dF} onChange={(e) => setDF(e.target.value)}><option value="">All drones</option>{run.drones.map((d: any) => <option key={d.drone_id} value={d.drone_id}>{d.drone_id}</option>)}</select></h3>
           <div className="log mono">{evs.slice(0, 80).map((e) => <div key={e.id} className={'e ' + e.sev}><span className="mut">{e.t}</span>{e.drone ? <span className="d">{dname(e.drone)}</span> : <span className="d mut">{e.cat}</span>}<span>{e.msg}</span></div>)}{!evs.length && <span className="mut">No events match.</span>}</div></div>
+        <div className="card"><h3>Failure schedule</h3>
+          {run.failure_schedule_type || run.failure_scenario_id
+            ? <><p className="mut">{run.failure_schedule_type === 'custom' ? 'Custom user-authored plan' : run.failure_scenario_id} · scheduled relative to mission start</p>
+              {!!run.failure_events?.length && <table><thead><tr><th>Event</th><th>Type</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>
+                {run.failure_events.map((event: any) => <tr key={event.id}><td className="mono">{event.id}</td><td>{event.type}</td><td className="mono">{event.start_s}s</td><td className="mono">{event.end_s == null ? 'never' : `${event.end_s}s`}</td><td>{event.status}</td></tr>)}
+              </tbody></table>}
+            </>
+            : <p className="mut">No failure schedule is installed for this run.</p>}
+          <p className="mut" style={{ fontSize: 10.5, margin: '8px 0 0' }}>An unresponsive drone is marked disconnected. Other event types show their lifecycle only; controller, partition, packet-loss, delay, battery, and no-fly effects are not simulated.</p></div>
         <div className="card sys"><h3>System status</h3>
           <div className="sys-grid">
             <div className="r">Coordination mode<b className="badge">{run.coordination_mode ?? s.mode}</b></div>

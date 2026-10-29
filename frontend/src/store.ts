@@ -51,7 +51,6 @@ function absorb(s: S, next: any) {
   const prev = s.run; const tick = next.tick
   const evs: Ev[] = []; const hands: Handoff[] = []
   const active = { ...s.active }
-  const on = (key: string, cond: boolean, onTrue: () => void, onFalse?: () => void) => { if (cond && !active[key]) { active[key] = 1; onTrue() } else if (!cond && active[key]) { delete active[key]; onFalse?.() } }
 
   if (prev) {
     const pt: any = Object.fromEntries(prev.tasks.map((t: any) => [t.task_id, t]))
@@ -91,11 +90,7 @@ function absorb(s: S, next: any) {
     visited.add(`${d.x},${d.y}`)
     if (d.status !== 'disconnected') lastSeen[d.drone_id] = tick
   }
-  for (const t of next.tasks) {
-    const dupe = (t.assigned_to || []).length > 1 && t.status !== 'completed'
-    on(`dup:${t.task_id}`, dupe, () => evs.push(mk(tick, 'error', 'Conflict', `Duplicate/conflicting ownership on ${t.task_id}: ${t.assigned_to.join(', ')}`)),
-      () => evs.push(mk(tick, 'info', 'Reconciliation', `Ownership conflict on ${t.task_id} resolved`)))
-  }
+  
   const obs = observe(s.obs, next)
   return {
     run: next, trails, visited, dist, bat, lastSeen, active, obs,
