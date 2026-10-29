@@ -286,13 +286,6 @@ function createHazardPopupContent(
     root.appendChild(limitations)
   }
 
-  const source = document.createElement('div')
-  source.textContent =
-    `Source: ${hazard.analysis_source || 'Saved analysis'}`
-  source.style.cssText =
-    'margin-top:8px;color:#9ca3af;font-size:10px'
-  root.appendChild(source)
-
   return root
 }
 
