@@ -31,7 +31,7 @@ const TRAIL = [
   '#60a5fa',
 ]
 
-// Hazard priority legend shown in the "i" panel: [level, meaning, hex]
+// Priority legend shown in the "i" panel: [level, meaning, hex]
 const PRIORITY_LEGEND: [number, string, string][] = [
   [5, 'Life-threatening', '#ff1744'],
   [4, 'Critical', '#ff6d00'],
@@ -40,41 +40,8 @@ const PRIORITY_LEGEND: [number, string, string][] = [
   [1, 'Low', '#00e5ff'],
 ]
 
-const PRIORITY_LABELS: Record<number, string> = {
-  5: 'Life-threatening',
-  4: 'Critical',
-  3: 'High',
-  2: 'Moderate',
-  1: 'Low',
-}
-
-// Saved hazard results (used only for the hover popup) always use T1.
+// Saved image-analysis results (hover popup + drone priority) use one fixed set.
 const TIMEFRAME = 'T1'
-
-// Simulation-driven drone priority: highest priority among the drone's
-// unfinished assigned tasks (1-5). Idle drones are level 1 (Low).
-export function dronePriority(
-  run: any,
-  droneId: string,
-): { priority_level: number; priority_label: string } {
-  const drone = run?.drones?.find((d: any) => d.drone_id === droneId)
-
-  const top = (run?.tasks || [])
-    .filter(
-      (t: any) =>
-        t.status !== 'completed' &&
-        ((t.assigned_to || []).includes(droneId) ||
-          t.task_id === drone?.task_id),
-    )
-    .reduce(
-      (m: number, t: any) => Math.max(m, Number(t.priority) || 0),
-      0,
-    )
-
-  const level = Math.min(5, Math.max(1, Math.round(top) || 1))
-
-  return { priority_level: level, priority_label: PRIORITY_LABELS[level] }
-}
 
 type HazardAnalysis = {
   scenario: string
@@ -335,12 +302,13 @@ export default function MapView({
     ? scenarioForHazards(String(run.scenario_id))
     : ''
 
-  // Load saved results only (used for the hover popup). Does not call Gemini.
+  // Load saved image-analysis results only. This does not call Gemini again.
   useEffect(() => {
     let cancelled = false
 
     hazardsRef.current = []
     setHazardResults([])
+    useStore.getState().setHazards({})
 
     // Close a previous scenario's popup when changing scenarios.
     popupRef.current?.remove()
@@ -359,12 +327,26 @@ export default function MapView({
 
         hazardsRef.current = results
         setHazardResults(results)
+
+        // Share per-drone priority with the Mission Control side panel.
+        useStore.getState().setHazards(
+          Object.fromEntries(
+            results.map((item) => [
+              item.drone_id,
+              {
+                priority_level: item.priority_level,
+                priority_label: item.priority_label,
+              },
+            ]),
+          ),
+        )
       })
       .catch(() => {
         if (cancelled) return
 
         hazardsRef.current = []
         setHazardResults([])
+        useStore.getState().setHazards({})
       })
 
     return () => {
@@ -537,7 +519,6 @@ export default function MapView({
     if (!m || !ready.current || !run) return
 
     const g = run.grid
-    const rows = rowsOf(g)
     const feats: any[] = []
 
     for (let y = 0; y < g.height; y++) {
@@ -726,26 +707,27 @@ export default function MapView({
         (item) => item.drone_id === d.drone_id,
       )
 
-      // Priority colour comes from the live simulation (same value as the
-      // "Drone priority & flight paths" panel), drawn on the drone icon only.
-      const pr = dronePriority(run, d.drone_id)
-      const color = priorityColor(pr.priority_level)
-
+      // Priority colour is drawn as a small square on the drone icon only.
       p.e.style.outline = ''
       p.e.style.outlineOffset = ''
       p.e.style.borderRadius = ''
       const icon = p.e.querySelector('.ic') as HTMLElement | null
 
-      if (icon) {
-        icon.style.borderRadius = '7px'
-        icon.style.border = `2px solid ${color}`
-        icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
-      }
+      if (hazard) {
+        const color = priorityColor(hazard.priority_level)
 
-      p.e.title = hazard
-        ? `${d.drone_id}: ${hazard.priority_label} priority · ` +
+        if (icon) {
+          icon.style.borderRadius = '7px'
+          icon.style.border = `2px solid ${color}`
+          icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
+        }
+
+        p.e.title =
+          `${d.drone_id}: ${hazard.priority_label} priority · ` +
           `Risk ${hazard.simulated_risk_score} · Hover for details`
-        : `${d.drone_id}: P${pr.priority_level} · ${pr.priority_label}`
+      } else {
+        p.e.title = `${d.drone_id}: no saved priority data`
+      }
     }
 
     extra.current.forEach((x) => x.remove())
@@ -771,20 +753,7 @@ export default function MapView({
       )
     }
 
-    for (const c of run.candidate_detections || []) {
-      if (!cands.current[c.id]) {
-        const e = document.createElement('div')
-
-        e.className = 'cand'
-        e.title = `${c.id}: ${c.verification_status}`
-
-        cands.current[c.id] = new maplibregl.Marker({
-          element: e,
-        })
-          .setLngLat(toLngLat(c.x + 0.5, c.y + 0.5))
-          .addTo(m)
-      }
-    }
+    // Candidate-detection (yellow) markers are intentionally not drawn.
   }
 
   useEffect(draw, [

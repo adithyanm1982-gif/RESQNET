@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import MapView, { dronePriority } from '../components/MapView'
+import MapView from '../components/MapView'
 import { DroneIcon } from '../components/Icons'
 import { useStore } from '../store'
 import { label, latlon } from '../geo'
@@ -100,13 +100,13 @@ export default function Mission() {
         <div className="card"><h3><span className="grow">Drone priority & flight paths</span><span className="badge">{run.drones.length} drones</span></h3>
           <div className="pathlist">
             {run.drones.map((d: any) => {
-              const hz = dronePriority(run, d.drone_id)
+              const hz = s.hazards[d.drone_id]
               const path: [number, number][] = s.trails[d.drone_id] || []
               return (
-                <div key={d.drone_id} className="pathbox" style={{ '--pc': priColor(hz.priority_level) } as any} onClick={() => s.select(d.drone_id)}>
+                <div key={d.drone_id} className="pathbox" style={hz ? ({ '--pc': priColor(hz.priority_level) } as any) : undefined} onClick={() => s.select(d.drone_id)}>
                   <div className="ph">
                     <b>{dname(d.drone_id)}</b>
-                    <span className="pchip">P{hz.priority_level} · {hz.priority_label}</span>
+                    {hz ? <span className="pchip">P{hz.priority_level} · {hz.priority_label}</span> : <span className="mut">No priority data</span>}
                     <span className="grow" /><span className="mut mono">{path.length} pts</span>
                   </div>
                   {path.length
