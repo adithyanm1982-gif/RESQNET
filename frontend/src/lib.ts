@@ -14,6 +14,33 @@ export const connOf = (d: any) => (d.connected != null ? !!d.connected : d.statu
 export const healthOf = (d: any, bat: number): 'ok' | 'warn' | 'bad' =>
   !connOf(d) ? 'bad' : bat < 25 || d.status === 'recovering' || d.status === 'returning' ? 'warn' : 'ok'
 
+// Task priority scale (from disaster_scenarios.json: 1 low ... 5 life-threatening) and its display colours.
+export const PRIORITY_SCALE: Record<number, { label: string; color: string }> = {
+  5: { label: 'Life-threatening', color: '#ff1744' },
+  4: { label: 'Critical', color: '#ff6d00' },
+  3: { label: 'High', color: '#ffea00' },
+  2: { label: 'Moderate', color: '#00e676' },
+  1: { label: 'Low', color: '#00e5ff' },
+}
+export const priorityColor = (level: number) => (PRIORITY_SCALE[level] ?? PRIORITY_SCALE[1]).color
+export type DronePriority = { level: number; label: string; color: string; task: string; basis: 'current' | 'assigned' | 'completed' }
+// A drone's priority comes from the simulation's task data:
+//  1) the task it is working on now, else 2) the highest-priority unfinished task assigned to it,
+//  else 3) the highest-priority task it has completed. Returns null if it has never owned a task.
+export function dronePriority(run: any, d: any): DronePriority | null {
+  const tasks: any[] = run?.tasks || []
+  const owns = (t: any) => (t.assigned_to || []).includes(d.drone_id) || (t.claims || []).some((c: any) => c.drone_id === d.drone_id)
+  const best = (list: any[]) => list.reduce((a: any, t: any) => (!a || (t.priority ?? 0) > (a.priority ?? 0) ? t : a), null)
+  const make = (t: any, basis: DronePriority['basis']): DronePriority | null => {
+    const level = Number(t?.priority)
+    return t && level >= 1 ? { level, label: (PRIORITY_SCALE[level] ?? PRIORITY_SCALE[1]).label, color: priorityColor(level), task: t.task_id, basis } : null
+  }
+  const current = d.task_id ? tasks.find((t) => t.task_id === d.task_id) : null
+  return make(current, 'current')
+    ?? make(best(tasks.filter((t) => t.status !== 'completed' && owns(t))), 'assigned')
+    ?? make(best(tasks.filter((t) => t.status === 'completed' && owns(t))), 'completed')
+}
+
 // Observations computed from real backend states (used live and in Experiments)
 export type Obs = { dup: number; safety: number; firstDisc: number | null; recovered: number | null; discNow: number; dupNow: number; dupKeys: Record<string, 1>; safeKeys: Record<string, 1> }
 export const emptyObs = (): Obs => ({ dup: 0, safety: 0, firstDisc: null, recovered: null, discNow: 0, dupNow: 0, dupKeys: {}, safeKeys: {} })

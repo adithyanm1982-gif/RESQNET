@@ -5,7 +5,6 @@ import { Obs, emptyObs, observe, summary } from './lib'
 export type Sev = 'info' | 'warn' | 'error'
 export type Ev = { id: number; t: string; iso: string; tick: number; sev: Sev; cat: string; drone?: string; msg: string }
 export type Handoff = { id: number; tick: number; t: string; task: string; from: string; to: string; x: number; y: number }
-export type HazardPriority = { priority_level: number; priority_label: string }
 
 const load = (k: string, d: any) => { try { const v = JSON.parse(localStorage.getItem(k) || ''); return v ?? d } catch { return d } }
 const persist = (k: string, v: any) => { try { localStorage.setItem(k, JSON.stringify(v)); return true } catch { return false } }
@@ -20,7 +19,6 @@ interface S {
   scenarios: any[]; scenarioId: string; mode: CoordinationMode
   run: any | null; archived: boolean; trails: Record<string, [number, number][]>; visited: Set<string>; dist: Record<string, number>; bat: Record<string, number>; lastSeen: Record<string, number>
   events: Ev[]; handoffs: Handoff[]; active: Record<string, 1>; obs: Obs
-  hazards: Record<string, HazardPriority>; setHazards: (h: Record<string, HazardPriority>) => void
   covHistory: { tick: number; cov: number; done: number; disc: number; dup: number }[]
   running: boolean; busy: boolean; error: string; health: string; booting: boolean
   speedMs: number; ticksPerStep: number; selected: string; seed: string; basemap: 'satellite' | 'dark'; secPerTick: number
@@ -109,7 +107,7 @@ export const useStore = create<S>((set, get) => ({
   failureSource: initialFailureSource,
   customPlan: Array.isArray(loadedCustomPlan) ? loadedCustomPlan : [],
   scenarios: [], scenarioId: localStorage.getItem('rq_scn') || '', mode: (localStorage.getItem('rq_mode') as CoordinationMode) || 'hybrid',
-  ...fresh(), hazards: {}, running: false, busy: false, error: '', health: 'unknown', booting: false,
+  ...fresh(), running: false, busy: false, error: '', health: 'unknown', booting: false,
   speedMs: load('rq_speed', 700), ticksPerStep: load('rq_tps', 1), selected: '', seed: load('rq_seed', ''), basemap: load('rq_base', 'satellite'), secPerTick: load('rq_spt', 2),
   saved: load('rq_saved2', []), comparison: [], cmpProgress: '',
 
@@ -137,7 +135,6 @@ export const useStore = create<S>((set, get) => ({
   setCustomPlan: (events) => { persist('rq_custom_plan', events); set({ customPlan: events }) },
   setScenario: (id) => { localStorage.setItem('rq_scn', id); set({ scenarioId: id }) },
   setMode: (m) => { localStorage.setItem('rq_mode', m); set({ mode: m }) },
-  setHazards: (h) => set({ hazards: h }),
   start: async () => {
     const { scenarioId, mode, failId, failureSource, customPlan, droneCfg } = get(); if (!scenarioId) return false
     if (failureSource === 'predefined' && !failId) { set({ error: 'Choose a predefined failure schedule or select no failure schedule.' }); return false }

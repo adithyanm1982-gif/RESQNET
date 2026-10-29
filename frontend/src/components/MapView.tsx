@@ -4,9 +4,8 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useStore } from '../store'
 import { cellPoly, center, toLngLat } from '../geo'
-import { batteryOf, dname, healthOf, rowsOf } from '../lib'
+import { batteryOf, dname, dronePriority, healthOf, PRIORITY_SCALE } from '../lib'
 import { droneSvg } from './Icons'
-import { api } from '../api'
 
 const EMPTY: any = {
   type: 'FeatureCollection',
@@ -17,7 +16,6 @@ const LAYERS: Record<string, string[]> = {
   grid: ['cl'],
   trails: ['tr'],
   tasks: ['tk'],
-  zones: ['cf', 'cx', 'rx', 'cz', 'czl'],
 }
 
 const TRAIL = [
@@ -31,65 +29,9 @@ const TRAIL = [
   '#60a5fa',
 ]
 
-// Hazard priority legend shown in the "i" panel: [level, meaning, hex]
-const PRIORITY_LEGEND: [number, string, string][] = [
-  [5, 'Life-threatening', '#ff1744'],
-  [4, 'Critical', '#ff6d00'],
-  [3, 'High', '#ffea00'],
-  [2, 'Moderate', '#00e676'],
-  [1, 'Low', '#00e5ff'],
-]
-
-type HazardAnalysis = {
-  scenario: string
-  filename: string
-  drone_id: string
-  timeframe: string
-  visible_hazards: string[]
-  priority_level: number
-  priority_label: string
-  simulated_risk_score: number
-  explanation: string
-  confidence: number
-  limitations: string | string[]
-  analysis_source: string
-  image_url: string
-}
-
-type HazardResultsResponse = {
-  scenario: string
-  timeframe: string
-  count: number
-  results: HazardAnalysis[]
-}
-
 type DronePin = {
   m: maplibregl.Marker
   e: HTMLElement
-}
-
-const BACKEND_URL = (
-  import.meta.env.VITE_BACKEND_URL || ''
-).replace(/\/+$/, '')
-
-function hazardImageUrl(path: string): string {
-  if (!path) return ''
-
-  if (/^https?:\/\//i.test(path)) {
-    return path
-  }
-
-  return `${BACKEND_URL}${path.startsWith('/') ? path : `/${path}`}`
-}
-
-function scenarioForHazards(scenarioId: string): string {
-  const value = scenarioId.toLowerCase()
-
-  if (value.includes('cyclone')) return 'cyclone'
-  if (value.includes('flood')) return 'flood'
-  if (value.includes('earthquake')) return 'earthquake'
-
-  return scenarioId
 }
 
 // Small screen-space offsets keep nearby drone icons and labels readable.
@@ -110,152 +52,6 @@ function droneMarkerOffset(droneId: string): [number, number] {
   return offsets[key] ?? [0, 0]
 }
 
-function priorityColor(level: number): string {
-  switch (level) {
-    case 5:
-      return '#ff1744'
-    case 4:
-      return '#ff6d00'
-    case 3:
-      return '#ffea00'
-    case 2:
-      return '#00e676'
-    default:
-      return '#00e5ff'
-  }
-}
-
-function readableList(items: string[]): string {
-  return items?.length ? items.join(', ') : 'No hazards listed'
-}
-
-function createHazardPopupContent(
-  hazard: HazardAnalysis,
-): HTMLElement {
-  const root = document.createElement('div')
-
-  root.style.cssText = [
-    'width:280px',
-    'max-width:280px',
-    'max-height:380px',
-    'overflow:auto',
-    'padding:8px',
-    'box-sizing:border-box',
-    'font-family:Arial,sans-serif',
-    'color:#e5e7eb',
-    'background:#111827',
-    'font-size:12px',
-    'line-height:1.5',
-  ].join(';')
-
-  const title = document.createElement('div')
-  title.textContent = `${hazard.drone_id} · ${hazard.timeframe}`
-  title.style.cssText =
-    'font-size:15px;font-weight:700;margin-bottom:8px;color:#f9fafb'
-  root.appendChild(title)
-
-  const imageUrl = hazardImageUrl(hazard.image_url)
-
-  if (imageUrl) {
-    const image = document.createElement('img')
-
-    image.src = imageUrl
-    image.alt = `Observed area for ${hazard.drone_id}`
-    image.loading = 'eager'
-    image.style.cssText =
-      'display:block;width:100%;max-height:160px;min-height:70px;' +
-      'object-fit:contain;background:#030712;border-radius:6px;' +
-      'margin-bottom:9px'
-
-    image.onerror = () => {
-      image.style.display = 'none'
-
-      // Do not hide the entire popup if the image fails.
-      if (!root.querySelector('.hazard-image-error')) {
-        const message = document.createElement('div')
-        message.className = 'hazard-image-error'
-        message.textContent =
-          `Image could not load. Check the image URL: ${imageUrl}`
-
-        message.style.cssText =
-          'padding:8px;background:#7f1d1d;color:#fecaca;' +
-          'border-radius:5px;margin-bottom:8px;overflow-wrap:anywhere;'
-
-        image.insertAdjacentElement('afterend', message)
-      }
-    }
-
-    root.appendChild(image)
-  } else {
-    const message = document.createElement('div')
-    message.textContent = 'No image URL was returned by the backend.'
-    message.style.cssText =
-      'padding:8px;background:#374151;border-radius:5px;margin-bottom:8px'
-    root.appendChild(message)
-  }
-
-  const priority = document.createElement('div')
-  priority.textContent =
-    `Priority ${hazard.priority_level}: ${hazard.priority_label}`
-  priority.style.cssText =
-    `font-weight:700;color:${priorityColor(hazard.priority_level)};margin-bottom:5px`
-  root.appendChild(priority)
-
-  const risk = document.createElement('div')
-  risk.textContent = `Risk score: ${hazard.simulated_risk_score}`
-  risk.style.marginBottom = '5px'
-  root.appendChild(risk)
-
-  const confidence = document.createElement('div')
-  confidence.textContent =
-    `Confidence: ${(hazard.confidence * 100).toFixed(1)}%`
-  confidence.style.marginBottom = '5px'
-  root.appendChild(confidence)
-
-  const hazardsTitle = document.createElement('div')
-  hazardsTitle.textContent = 'Visible hazards'
-  hazardsTitle.style.cssText = 'font-weight:700;margin-top:7px'
-  root.appendChild(hazardsTitle)
-
-  const hazardsText = document.createElement('div')
-  hazardsText.textContent = readableList(hazard.visible_hazards || [])
-  root.appendChild(hazardsText)
-
-  const explanationTitle = document.createElement('div')
-  explanationTitle.textContent = 'Analysis'
-  explanationTitle.style.cssText = 'font-weight:700;margin-top:7px'
-  root.appendChild(explanationTitle)
-
-  const explanation = document.createElement('div')
-  explanation.textContent =
-    hazard.explanation || 'No explanation available.'
-  root.appendChild(explanation)
-
-  const limitationsText = Array.isArray(hazard.limitations)
-    ? hazard.limitations.join('; ')
-    : hazard.limitations || ''
-
-  if (limitationsText) {
-    const limitationsTitle = document.createElement('div')
-    limitationsTitle.textContent = 'Limitations'
-    limitationsTitle.style.cssText = 'font-weight:700;margin-top:7px'
-    root.appendChild(limitationsTitle)
-
-    const limitations = document.createElement('div')
-    limitations.textContent = limitationsText
-    root.appendChild(limitations)
-  }
-
-  const source = document.createElement('div')
-  source.textContent =
-    `Source: ${hazard.analysis_source || 'Saved analysis'}`
-  source.style.cssText =
-    'margin-top:8px;color:#9ca3af;font-size:10px'
-  root.appendChild(source)
-
-  return root
-}
-
 export default function MapView({
   children,
 }: {
@@ -266,11 +62,7 @@ export default function MapView({
   const ready = useRef(false)
 
   const pins = useRef<Record<string, DronePin>>({})
-  const cands = useRef<Record<string, maplibregl.Marker>>({})
   const extra = useRef<maplibregl.Marker[]>([])
-
-  const hazardsRef = useRef<HazardAnalysis[]>([])
-  const popupRef = useRef<maplibregl.Popup | null>(null)
 
   const {
     run,
@@ -287,87 +79,10 @@ export default function MapView({
     grid: true,
     trails: true,
     tasks: true,
-    zones: true,
   })
 
   const [is3d, setIs3d] = useState(true)
   const [info, setInfo] = useState(false)
-
-  const [timeframe, setTimeframe] = useState('T1')
-  const [hazardResults, setHazardResults] = useState<HazardAnalysis[]>([])
-  const [hazardLoading, setHazardLoading] = useState(false)
-  const [hazardError, setHazardError] = useState('')
-
-  const scenarioId = run?.scenario_id
-    ? scenarioForHazards(String(run.scenario_id))
-    : ''
-
-  // Load saved results only. This does not call Gemini again.
-  useEffect(() => {
-    let cancelled = false
-
-    hazardsRef.current = []
-    setHazardResults([])
-    setHazardError('')
-    useStore.getState().setHazards({})
-
-    // Close a previous scenario's popup when changing scenarios.
-    popupRef.current?.remove()
-    popupRef.current = null
-
-    if (!scenarioId) {
-      setHazardLoading(false)
-      return
-    }
-
-    setHazardLoading(true)
-
-    api
-      .hazardResults(scenarioId, timeframe)
-      .then((response: HazardResultsResponse) => {
-        if (cancelled) return
-
-        const results = Array.isArray(response.results)
-          ? response.results
-          : []
-
-        hazardsRef.current = results
-        setHazardResults(results)
-
-        // Share per-drone priority with the Mission Control side panel.
-        useStore.getState().setHazards(
-          Object.fromEntries(
-            results.map((item) => [
-              item.drone_id,
-              {
-                priority_level: item.priority_level,
-                priority_label: item.priority_label,
-              },
-            ]),
-          ),
-        )
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return
-
-        hazardsRef.current = []
-        setHazardResults([])
-        useStore.getState().setHazards({})
-
-        setHazardError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load saved hazard results.',
-        )
-      })
-      .finally(() => {
-        if (!cancelled) setHazardLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [scenarioId, timeframe])
 
   useEffect(() => {
     if (!el.current) return
@@ -441,6 +156,8 @@ export default function MapView({
         })
       }
 
+      // Every cell of the 20x20 grid is drawn as a plain blue cell
+      // (slightly brighter once a drone has explored it).
       m.addLayer({
         id: 'cf',
         type: 'fill',
@@ -449,27 +166,15 @@ export default function MapView({
           'fill-color': [
             'match',
             ['get', 'k'],
-            'blocked',
-            '#64748b',
-            'restricted',
-            '#f87171',
             'visited',
             '#38bdf8',
-            'caution',
-            '#fbbf24',
             '#60a5fa',
           ],
           'fill-opacity': [
             'match',
             ['get', 'k'],
-            'blocked',
-            0,
-            'restricted',
-            0.4,
             'visited',
             0.3,
-            'caution',
-            0.2,
             0.09,
           ],
         },
@@ -487,53 +192,6 @@ export default function MapView({
       })
 
       m.addLayer({
-        id: 'cz',
-        type: 'line',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'caution'],
-        paint: {
-          'line-color': '#fbbf24',
-          'line-width': 1.4,
-          'line-opacity': 0.9,
-        },
-      })
-
-      m.addLayer({
-        id: 'czl',
-        type: 'line',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'restricted'],
-        paint: {
-          'line-color': '#f87171',
-          'line-width': 1.6,
-        },
-      })
-
-      m.addLayer({
-        id: 'cx',
-        type: 'fill-extrusion',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'blocked'],
-        paint: {
-          'fill-extrusion-color': '#64748b',
-          'fill-extrusion-height': 16,
-          'fill-extrusion-opacity': 0.85,
-        },
-      })
-
-      m.addLayer({
-        id: 'rx',
-        type: 'fill-extrusion',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'restricted'],
-        paint: {
-          'fill-extrusion-color': '#f87171',
-          'fill-extrusion-height': 8,
-          'fill-extrusion-opacity': 0.5,
-        },
-      })
-
-      m.addLayer({
         id: 'tr',
         type: 'line',
         source: 'trails',
@@ -544,10 +202,12 @@ export default function MapView({
         },
       })
 
+      // Pending (yellow) task dots are not drawn.
       m.addLayer({
         id: 'tk',
         type: 'circle',
         source: 'tasks',
+        filter: ['!=', ['get', 's'], 'pending'],
         paint: {
           'circle-radius': 6,
           'circle-color': [
@@ -557,8 +217,6 @@ export default function MapView({
             '#34d399',
             'blocked',
             '#f87171',
-            'pending',
-            '#fbbf24',
             '#38bdf8',
           ],
           'circle-stroke-width': 2,
@@ -573,15 +231,11 @@ export default function MapView({
     map.current = m
 
     return () => {
-      popupRef.current?.remove()
-      popupRef.current = null
-
       m.remove()
       map.current = null
       ready.current = false
 
       pins.current = {}
-      cands.current = {}
       extra.current = []
     }
   }, [])
@@ -592,36 +246,13 @@ export default function MapView({
     if (!m || !ready.current || !run) return
 
     const g = run.grid
-    const rows = rowsOf(g)
     const feats: any[] = []
 
     for (let y = 0; y < g.height; y++) {
       for (let x = 0; x < g.width; x++) {
-        const c = rows[y]?.[x]
-
-        let k =
-          c === '#'
-            ? 'blocked'
-            : c === 'X'
-              ? 'restricted'
-              : visited.has(`${x},${y}`)
-                ? 'visited'
-                : 'unexplored'
-
-        if (c !== 'X' && c !== '#') {
-          outer: for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              if (rows[y + dy]?.[x + dx] === 'X') {
-                if (k !== 'visited') k = 'caution'
-                break outer
-              }
-            }
-          }
-        }
-
         feats.push({
           type: 'Feature',
-          properties: { k },
+          properties: { k: visited.has(`${x},${y}`) ? 'visited' : 'unexplored' },
           geometry: {
             type: 'Polygon',
             coordinates: [cellPoly(x, y)],
@@ -692,69 +323,6 @@ export default function MapView({
 
         e.onclick = () => select(d.drone_id)
 
-        // Keep the popup open while the pointer moves from the drone
-        // into the popup. Close it after leaving both areas.
-        let popupCloseTimer: ReturnType<typeof setTimeout> | undefined
-        let activePopup: maplibregl.Popup | null = null
-
-        const cancelPopupClose = () => {
-          if (popupCloseTimer) {
-            clearTimeout(popupCloseTimer)
-            popupCloseTimer = undefined
-          }
-        }
-
-        const schedulePopupClose = () => {
-          cancelPopupClose()
-          popupCloseTimer = setTimeout(() => {
-            if (activePopup && popupRef.current === activePopup) {
-              activePopup.remove()
-              popupRef.current = null
-            }
-            activePopup = null
-          }, 250)
-        }
-
-        e.addEventListener('mouseenter', () => {
-          cancelPopupClose()
-
-          const hazard = hazardsRef.current.find(
-            (item) => item.drone_id === d.drone_id,
-          )
-
-          if (!hazard || !map.current) return
-
-          if (activePopup) activePopup.remove()
-          if (popupRef.current) popupRef.current.remove()
-          popupRef.current = null
-
-          const popup = new maplibregl.Popup({
-            closeButton: true,
-            closeOnClick: false,
-            closeOnMove: false,
-            maxWidth: '320px',
-            offset: 18,
-          })
-            .setLngLat(toLngLat(d.x + 0.5, d.y + 0.5))
-            .setDOMContent(createHazardPopupContent(hazard))
-            .addTo(map.current)
-
-          activePopup = popup
-          popupRef.current = popup
-
-          const popupElement = popup.getElement()
-          popupElement.addEventListener('mouseenter', cancelPopupClose)
-          popupElement.addEventListener('mouseleave', schedulePopupClose)
-
-          popup.on('close', () => {
-            cancelPopupClose()
-            if (popupRef.current === popup) popupRef.current = null
-            if (activePopup === popup) activePopup = null
-          })
-        })
-
-        e.addEventListener('mouseleave', schedulePopupClose)
-
         p = {
           e,
           m: new maplibregl.Marker({
@@ -796,32 +364,22 @@ export default function MapView({
           ? ''
           : batClass(b.v)
 
-      const hazard = hazardsRef.current.find(
-        (item) => item.drone_id === d.drone_id,
-      )
-
-      // Priority colour is drawn as a small square on the drone icon only
-      // (no outline on the whole marker, which stretched across the map).
-      p.e.style.outline = ''
-      p.e.style.outlineOffset = ''
-      p.e.style.borderRadius = ''
+      // Drone icon is outlined in its priority colour, taken from the
+      // simulation's task data (same rule as the side-panel box).
+      const pr = dronePriority(run, d)
       const icon = p.e.querySelector('.ic') as HTMLElement | null
 
-      if (hazard) {
-        const color = priorityColor(hazard.priority_level)
-
+      if (pr) {
         if (icon) {
           icon.style.borderRadius = '7px'
-          icon.style.border = `2px solid ${color}`
-          icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
+          icon.style.border = `2px solid ${pr.color}`
+          icon.style.boxShadow = `0 0 0 2px ${pr.color}55, 0 0 10px ${pr.color}99`
         }
 
         p.e.title =
-          `${d.drone_id}: ${hazard.priority_label} priority · ` +
-          `Risk ${hazard.simulated_risk_score} · Hover for details`
+          `${d.drone_id}: ${pr.label} priority (task ${pr.task}, P${pr.level})`
       } else {
-        p.e.title =
-          `${d.drone_id}: no saved hazard result for ${timeframe}`
+        p.e.title = `${d.drone_id}: no task priority yet`
       }
     }
 
@@ -847,21 +405,6 @@ export default function MapView({
           .addTo(m),
       )
     }
-
-    for (const c of run.candidate_detections || []) {
-      if (!cands.current[c.id]) {
-        const e = document.createElement('div')
-
-        e.className = 'cand'
-        e.title = `${c.id}: ${c.verification_status}`
-
-        cands.current[c.id] = new maplibregl.Marker({
-          element: e,
-        })
-          .setLngLat(toLngLat(c.x + 0.5, c.y + 0.5))
-          .addTo(m)
-      }
-    }
   }
 
   useEffect(draw, [
@@ -871,22 +414,15 @@ export default function MapView({
     selected,
     handoffs,
     bat,
-    hazardResults,
-    timeframe,
   ])
 
   useEffect(() => {
     if (run) return
 
-    popupRef.current?.remove()
-    popupRef.current = null
-
     Object.values(pins.current).forEach((p) => p.m.remove())
-    Object.values(cands.current).forEach((p) => p.remove())
     extra.current.forEach((x) => x.remove())
 
     pins.current = {}
-    cands.current = {}
     extra.current = []
   }, [run])
 
@@ -962,84 +498,11 @@ export default function MapView({
     <div className="mapbox">
       <div className="map" ref={el} />
 
-      {/* Saved hazard timeframe selector */}
-      <div
-        className="glass"
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          zIndex: 5,
-          padding: '8px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          color: '#e5e7eb',
-          fontSize: 12,
-          // UI fix: keep the panel dark in both light and dark themes so the
-          // text stays readable (the theme glass turned transparent in light mode)
-          background: 'rgba(15, 23, 42, 0.88)',
-          border: '1px solid rgba(148, 163, 184, 0.3)',
-          borderRadius: 12,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
-        }}
-      >
-        <label htmlFor="hazard-timeframe" style={{ color: '#e5e7eb' }}>
-          Hazard analysis
-        </label>
-
-        <select
-          id="hazard-timeframe"
-          value={timeframe}
-          onChange={(event) => setTimeframe(event.target.value)}
-          style={{
-            background: '#111827',
-            color: '#f9fafb',
-            border: '1px solid #475569',
-            borderRadius: 5,
-            padding: '5px 7px',
-          }}
-        >
-          <option value="T1">T1</option>
-          <option value="T2">T2</option>
-          <option value="T3">T3</option>
-        </select>
-
-        <span style={{ color: '#cbd5e1' }}>
-          {hazardLoading
-            ? 'Loading…'
-            : `${hazardResults.length} results`}
-        </span>
-      </div>
-
-      {hazardError && (
-        <div
-          className="glass"
-          role="status"
-          style={{
-            position: 'absolute',
-            top: 58,
-            left: 12,
-            zIndex: 5,
-            maxWidth: 300,
-            padding: 8,
-            color: '#fca5a5',
-            fontSize: 11,
-            overflowWrap: 'anywhere',
-          }}
-        >
-          Could not load saved hazards: {hazardError}
-        </div>
-      )}
-
       <div className="tb-l glass">
         {[
           ['grid', '▦', 'Search grid'],
           ['trails', '⤳', 'Flight paths'],
           ['tasks', '◎', 'Tasks'],
-          ['zones', '⬢', 'Zones & obstacles'],
         ].map(([k, i, t]) => (
           <button
             key={k}
@@ -1145,18 +608,12 @@ export default function MapView({
           </span>
 
           <span>
-            <i style={{ border: '1px dashed #fbbf24' }} />
-            Caution (next to RZ)
-          </span>
-
-          <span>
             <i className="ln" />
             Flight path
           </span>
 
           {dot('#34d399', 'Task done')}
           {dot('#38bdf8', 'Task active')}
-          {dot('#fbbf24', 'Task pending')}
           {dot('#f87171', 'Task blocked')}
 
           <span>┅ Low battery</span>
@@ -1165,31 +622,32 @@ export default function MapView({
           <hr style={{ gridColumn: '1 / -1', width: '100%', margin: '2px 0' }} />
 
           <div style={{ gridColumn: '1 / -1', display: 'grid', gap: 4 }}>
-            <strong>Hazard priority level</strong>
-            {PRIORITY_LEGEND.map(([level, meaning, hex]) => (
-              <span key={level}>
-                <i
-                  style={{
-                    background: hex,
-                    border: `1px solid ${hex}`,
-                    width: 12,
-                    height: 12,
-                    borderRadius: 3,
-                  }}
-                />
-                <b>{level}</b> · {meaning}
-                <span
-                  className="mono"
-                  style={{ marginLeft: 'auto', opacity: 0.75 }}
-                >
-                  {hex}
-                </span>
-              </span>
-            ))}
-          </div>
+            <strong>Drone priority level</strong>
+            {[5, 4, 3, 2, 1].map((level) => {
+              const { label, color } = PRIORITY_SCALE[level]
 
-          <span>Hover over a drone to view saved analysis.</span>
-          <span>Use the popup close button to dismiss the analysis.</span>
+              return (
+                <span key={level}>
+                  <i
+                    style={{
+                      background: color,
+                      border: `1px solid ${color}`,
+                      width: 12,
+                      height: 12,
+                      borderRadius: 3,
+                    }}
+                  />
+                  <b>{level}</b> · {label}
+                  <span
+                    className="mono"
+                    style={{ marginLeft: 'auto', opacity: 0.75 }}
+                  >
+                    {color}
+                  </span>
+                </span>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
