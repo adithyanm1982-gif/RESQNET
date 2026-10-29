@@ -575,8 +575,10 @@ export default function MapView({
 
       const base = droneMarkerOffset(d.drone_id)
       const c = m.project(toLngLat(d.x + 0.5, d.y + 0.5) as any)
-      const w = p.e.offsetWidth || 120
-      const h = p.e.offsetHeight || 34
+      const ic = p.e.querySelector('.ic') as HTMLElement | null
+      const lb = p.e.querySelector('.lb') as HTMLElement | null
+      const w = ic && lb ? ic.offsetWidth + lb.offsetWidth - 6 : 120
+      const h = ic && lb ? Math.max(ic.offsetHeight, lb.offsetHeight) : 34
 
       // Marker anchor is 'left': the pin's left edge sits at point + offset.x,
       // vertically centred on point + offset.y.
@@ -591,9 +593,7 @@ export default function MapView({
           const lo = Math.max(r1[0], r2[0]) + PAD
           const hi = Math.min(r1[1], r2[1]) - PAD
 
-          left = hi - lo >= w
-            ? Math.min(Math.max(left, lo), hi - w)
-            : lo
+          if (hi - lo >= w) left = Math.min(Math.max(left, lo), hi - w)
         }
 
         const c1 = quadSpan(quad, 'x', left)
@@ -603,9 +603,7 @@ export default function MapView({
           const lo = Math.max(c1[0], c2[0]) + PAD
           const hi = Math.min(c1[1], c2[1]) - PAD
 
-          top = hi - lo >= h
-            ? Math.min(Math.max(top, lo), hi - h)
-            : lo
+          if (hi - lo >= h) top = Math.min(Math.max(top, lo), hi - h)
         }
       }
 
@@ -807,8 +805,11 @@ export default function MapView({
 
       p.m.setLngLat(ll)
 
-      p.e.className =
-        `pin ${h} ${selected === d.drone_id ? 'sel' : ''}`
+      // Keep maplibre's own marker classes (position:absolute); only swap state classes.
+      p.e.classList.add('maplibregl-marker', 'pin')
+      p.e.classList.remove('ok', 'warn', 'bad', 'sel')
+      p.e.classList.add(h)
+      if (selected === d.drone_id) p.e.classList.add('sel')
 
       p.e.innerHTML =
         `<span class="ic">${droneSvg(17)}</span>` +
