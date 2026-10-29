@@ -40,6 +40,42 @@ const PRIORITY_LEGEND: [number, string, string][] = [
   [1, 'Low', '#00e5ff'],
 ]
 
+const PRIORITY_LABELS: Record<number, string> = {
+  5: 'Life-threatening',
+  4: 'Critical',
+  3: 'High',
+  2: 'Moderate',
+  1: 'Low',
+}
+
+// Saved hazard results (used only for the hover popup) always use T1.
+const TIMEFRAME = 'T1'
+
+// Simulation-driven drone priority: highest priority among the drone's
+// unfinished assigned tasks (1-5). Idle drones are level 1 (Low).
+export function dronePriority(
+  run: any,
+  droneId: string,
+): { priority_level: number; priority_label: string } {
+  const drone = run?.drones?.find((d: any) => d.drone_id === droneId)
+
+  const top = (run?.tasks || [])
+    .filter(
+      (t: any) =>
+        t.status !== 'completed' &&
+        ((t.assigned_to || []).includes(droneId) ||
+          t.task_id === drone?.task_id),
+    )
+    .reduce(
+      (m: number, t: any) => Math.max(m, Number(t.priority) || 0),
+      0,
+    )
+
+  const level = Math.min(5, Math.max(1, Math.round(top) || 1))
+
+  return { priority_level: level, priority_label: PRIORITY_LABELS[level] }
+}
+
 type HazardAnalysis = {
   scenario: string
   filename: string
@@ -293,37 +329,27 @@ export default function MapView({
   const [is3d, setIs3d] = useState(true)
   const [info, setInfo] = useState(false)
 
-  const [timeframe, setTimeframe] = useState('T1')
   const [hazardResults, setHazardResults] = useState<HazardAnalysis[]>([])
-  const [hazardLoading, setHazardLoading] = useState(false)
-  const [hazardError, setHazardError] = useState('')
 
   const scenarioId = run?.scenario_id
     ? scenarioForHazards(String(run.scenario_id))
     : ''
 
-  // Load saved results only. This does not call Gemini again.
+  // Load saved results only (used for the hover popup). Does not call Gemini.
   useEffect(() => {
     let cancelled = false
 
     hazardsRef.current = []
     setHazardResults([])
-    setHazardError('')
-    useStore.getState().setHazards({})
 
     // Close a previous scenario's popup when changing scenarios.
     popupRef.current?.remove()
     popupRef.current = null
 
-    if (!scenarioId) {
-      setHazardLoading(false)
-      return
-    }
-
-    setHazardLoading(true)
+    if (!scenarioId) return
 
     api
-      .hazardResults(scenarioId, timeframe)
+      .hazardResults(scenarioId, TIMEFRAME)
       .then((response: HazardResultsResponse) => {
         if (cancelled) return
 
@@ -333,41 +359,18 @@ export default function MapView({
 
         hazardsRef.current = results
         setHazardResults(results)
-
-        // Share per-drone priority with the Mission Control side panel.
-        useStore.getState().setHazards(
-          Object.fromEntries(
-            results.map((item) => [
-              item.drone_id,
-              {
-                priority_level: item.priority_level,
-                priority_label: item.priority_label,
-              },
-            ]),
-          ),
-        )
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (cancelled) return
 
         hazardsRef.current = []
         setHazardResults([])
-        useStore.getState().setHazards({})
-
-        setHazardError(
-          error instanceof Error
-            ? error.message
-            : 'Could not load saved hazard results.',
-        )
-      })
-      .finally(() => {
-        if (!cancelled) setHazardLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-  }, [scenarioId, timeframe])
+  }, [scenarioId])
 
   useEffect(() => {
     if (!el.current) return
@@ -441,6 +444,7 @@ export default function MapView({
         })
       }
 
+      // Every cell is drawn as a normal blue grid cell (unexplored / visited).
       m.addLayer({
         id: 'cf',
         type: 'fill',
@@ -449,27 +453,15 @@ export default function MapView({
           'fill-color': [
             'match',
             ['get', 'k'],
-            'blocked',
-            '#64748b',
-            'restricted',
-            '#f87171',
             'visited',
             '#38bdf8',
-            'caution',
-            '#fbbf24',
             '#60a5fa',
           ],
           'fill-opacity': [
             'match',
             ['get', 'k'],
-            'blocked',
-            0,
-            'restricted',
-            0.4,
             'visited',
             0.3,
-            'caution',
-            0.2,
             0.09,
           ],
         },
@@ -487,53 +479,6 @@ export default function MapView({
       })
 
       m.addLayer({
-        id: 'cz',
-        type: 'line',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'caution'],
-        paint: {
-          'line-color': '#fbbf24',
-          'line-width': 1.4,
-          'line-opacity': 0.9,
-        },
-      })
-
-      m.addLayer({
-        id: 'czl',
-        type: 'line',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'restricted'],
-        paint: {
-          'line-color': '#f87171',
-          'line-width': 1.6,
-        },
-      })
-
-      m.addLayer({
-        id: 'cx',
-        type: 'fill-extrusion',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'blocked'],
-        paint: {
-          'fill-extrusion-color': '#64748b',
-          'fill-extrusion-height': 16,
-          'fill-extrusion-opacity': 0.85,
-        },
-      })
-
-      m.addLayer({
-        id: 'rx',
-        type: 'fill-extrusion',
-        source: 'cells',
-        filter: ['==', ['get', 'k'], 'restricted'],
-        paint: {
-          'fill-extrusion-color': '#f87171',
-          'fill-extrusion-height': 8,
-          'fill-extrusion-opacity': 0.5,
-        },
-      })
-
-      m.addLayer({
         id: 'tr',
         type: 'line',
         source: 'trails',
@@ -544,10 +489,12 @@ export default function MapView({
         },
       })
 
+      // Pending (yellow) task dots are hidden; other task dots stay.
       m.addLayer({
         id: 'tk',
         type: 'circle',
         source: 'tasks',
+        filter: ['!=', ['get', 's'], 'pending'],
         paint: {
           'circle-radius': 6,
           'circle-color': [
@@ -557,8 +504,6 @@ export default function MapView({
             '#34d399',
             'blocked',
             '#f87171',
-            'pending',
-            '#fbbf24',
             '#38bdf8',
           ],
           'circle-stroke-width': 2,
@@ -597,27 +542,8 @@ export default function MapView({
 
     for (let y = 0; y < g.height; y++) {
       for (let x = 0; x < g.width; x++) {
-        const c = rows[y]?.[x]
-
-        let k =
-          c === '#'
-            ? 'blocked'
-            : c === 'X'
-              ? 'restricted'
-              : visited.has(`${x},${y}`)
-                ? 'visited'
-                : 'unexplored'
-
-        if (c !== 'X' && c !== '#') {
-          outer: for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              if (rows[y + dy]?.[x + dx] === 'X') {
-                if (k !== 'visited') k = 'caution'
-                break outer
-              }
-            }
-          }
-        }
+        // Restricted / blocked / caution cells are shown as normal blue grid.
+        const k = visited.has(`${x},${y}`) ? 'visited' : 'unexplored'
 
         feats.push({
           type: 'Feature',
@@ -800,29 +726,26 @@ export default function MapView({
         (item) => item.drone_id === d.drone_id,
       )
 
-      // Priority colour is drawn as a small square on the drone icon only
-      // (no outline on the whole marker, which stretched across the map).
+      // Priority colour comes from the live simulation (same value as the
+      // "Drone priority & flight paths" panel), drawn on the drone icon only.
+      const pr = dronePriority(run, d.drone_id)
+      const color = priorityColor(pr.priority_level)
+
       p.e.style.outline = ''
       p.e.style.outlineOffset = ''
       p.e.style.borderRadius = ''
       const icon = p.e.querySelector('.ic') as HTMLElement | null
 
-      if (hazard) {
-        const color = priorityColor(hazard.priority_level)
-
-        if (icon) {
-          icon.style.borderRadius = '7px'
-          icon.style.border = `2px solid ${color}`
-          icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
-        }
-
-        p.e.title =
-          `${d.drone_id}: ${hazard.priority_label} priority · ` +
-          `Risk ${hazard.simulated_risk_score} · Hover for details`
-      } else {
-        p.e.title =
-          `${d.drone_id}: no saved hazard result for ${timeframe}`
+      if (icon) {
+        icon.style.borderRadius = '7px'
+        icon.style.border = `2px solid ${color}`
+        icon.style.boxShadow = `0 0 0 2px ${color}55, 0 0 10px ${color}99`
       }
+
+      p.e.title = hazard
+        ? `${d.drone_id}: ${hazard.priority_label} priority · ` +
+          `Risk ${hazard.simulated_risk_score} · Hover for details`
+        : `${d.drone_id}: P${pr.priority_level} · ${pr.priority_label}`
     }
 
     extra.current.forEach((x) => x.remove())
@@ -872,7 +795,6 @@ export default function MapView({
     handoffs,
     bat,
     hazardResults,
-    timeframe,
   ])
 
   useEffect(() => {
@@ -898,6 +820,7 @@ export default function MapView({
     if (d) {
       map.current?.easeTo({
         center: toLngLat(d.x + 0.5, d.y + 0.5),
+        zoom: 18,
         duration: 600,
       })
     }
@@ -961,78 +884,6 @@ export default function MapView({
   return (
     <div className="mapbox">
       <div className="map" ref={el} />
-
-      {/* Saved hazard timeframe selector */}
-      <div
-        className="glass"
-        style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          zIndex: 5,
-          padding: '8px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          color: '#e5e7eb',
-          fontSize: 12,
-          // UI fix: keep the panel dark in both light and dark themes so the
-          // text stays readable (the theme glass turned transparent in light mode)
-          background: 'rgba(15, 23, 42, 0.88)',
-          border: '1px solid rgba(148, 163, 184, 0.3)',
-          borderRadius: 12,
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
-        }}
-      >
-        <label htmlFor="hazard-timeframe" style={{ color: '#e5e7eb' }}>
-          Hazard analysis
-        </label>
-
-        <select
-          id="hazard-timeframe"
-          value={timeframe}
-          onChange={(event) => setTimeframe(event.target.value)}
-          style={{
-            background: '#111827',
-            color: '#f9fafb',
-            border: '1px solid #475569',
-            borderRadius: 5,
-            padding: '5px 7px',
-          }}
-        >
-          <option value="T1">T1</option>
-          <option value="T2">T2</option>
-          <option value="T3">T3</option>
-        </select>
-
-        <span style={{ color: '#cbd5e1' }}>
-          {hazardLoading
-            ? 'Loading…'
-            : `${hazardResults.length} results`}
-        </span>
-      </div>
-
-      {hazardError && (
-        <div
-          className="glass"
-          role="status"
-          style={{
-            position: 'absolute',
-            top: 58,
-            left: 12,
-            zIndex: 5,
-            maxWidth: 300,
-            padding: 8,
-            color: '#fca5a5',
-            fontSize: 11,
-            overflowWrap: 'anywhere',
-          }}
-        >
-          Could not load saved hazards: {hazardError}
-        </div>
-      )}
 
       <div className="tb-l glass">
         {[
@@ -1145,18 +996,12 @@ export default function MapView({
           </span>
 
           <span>
-            <i style={{ border: '1px dashed #fbbf24' }} />
-            Caution (next to RZ)
-          </span>
-
-          <span>
             <i className="ln" />
             Flight path
           </span>
 
           {dot('#34d399', 'Task done')}
           {dot('#38bdf8', 'Task active')}
-          {dot('#fbbf24', 'Task pending')}
           {dot('#f87171', 'Task blocked')}
 
           <span>┅ Low battery</span>
@@ -1165,7 +1010,7 @@ export default function MapView({
           <hr style={{ gridColumn: '1 / -1', width: '100%', margin: '2px 0' }} />
 
           <div style={{ gridColumn: '1 / -1', display: 'grid', gap: 4 }}>
-            <strong>Hazard priority level</strong>
+            <strong>Drone priority level</strong>
             {PRIORITY_LEGEND.map(([level, meaning, hex]) => (
               <span key={level}>
                 <i

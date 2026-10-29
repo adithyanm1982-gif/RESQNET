@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import MapView from '../components/MapView'
+import MapView, { dronePriority } from '../components/MapView'
 import { DroneIcon } from '../components/Icons'
 import { useStore } from '../store'
 import { label, latlon } from '../geo'
@@ -8,7 +8,7 @@ import { batteryOf, connOf, dname, healthOf, mmss } from '../lib'
 import { batClass } from '../batteryColor'
 import type { CoordinationMode } from '../api'
 
-// Hazard priority level -> colour (same palette as the map legend)
+// Priority level -> colour (same palette as the map legend)
 const PRI_COLOR: Record<number, string> = { 5: '#ff1744', 4: '#ff6d00', 3: '#ffea00', 2: '#00e676', 1: '#00e5ff' }
 const priColor = (level: number) => PRI_COLOR[level] ?? '#00e5ff'
 
@@ -100,13 +100,13 @@ export default function Mission() {
         <div className="card"><h3><span className="grow">Drone priority & flight paths</span><span className="badge">{run.drones.length} drones</span></h3>
           <div className="pathlist">
             {run.drones.map((d: any) => {
-              const hz = s.hazards[d.drone_id]
+              const hz = dronePriority(run, d.drone_id)
               const path: [number, number][] = s.trails[d.drone_id] || []
               return (
-                <div key={d.drone_id} className="pathbox" style={hz ? ({ '--pc': priColor(hz.priority_level) } as any) : undefined} onClick={() => s.select(d.drone_id)}>
+                <div key={d.drone_id} className="pathbox" style={{ '--pc': priColor(hz.priority_level) } as any} onClick={() => s.select(d.drone_id)}>
                   <div className="ph">
                     <b>{dname(d.drone_id)}</b>
-                    {hz ? <span className="pchip">P{hz.priority_level} · {hz.priority_label}</span> : <span className="mut">No priority data</span>}
+                    <span className="pchip">P{hz.priority_level} · {hz.priority_label}</span>
                     <span className="grow" /><span className="mut mono">{path.length} pts</span>
                   </div>
                   {path.length
