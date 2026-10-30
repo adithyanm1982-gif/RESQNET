@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api.routes import simulations
@@ -109,6 +110,36 @@ def test_create_simulation_defaults_to_centralized_mode() -> None:
 
     assert response.status_code == 201
     assert response.json()["coordination_mode"] == "centralized"
+    assert response.json()["coverage_target_percentage"] == 90
+    assert response.json()["mission_duration_ticks"] == 300
+    assert response.json()["mission_status"] == "in_progress"
+
+
+def test_create_simulation_accepts_configurable_coverage_target() -> None:
+    response = client.post(
+        "/api/simulations",
+        json={
+            "scenario_id": "earthquake",
+            "mode": "decentralized",
+            "coverage_target_percentage": 75,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["coverage_target_percentage"] == 75
+
+
+@pytest.mark.parametrize("coverage_target", [0, 100.1, -1])
+def test_create_simulation_rejects_invalid_coverage_target(coverage_target) -> None:
+    response = client.post(
+        "/api/simulations",
+        json={
+            "scenario_id": "earthquake",
+            "coverage_target_percentage": coverage_target,
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_decentralized_route_advances_and_returns_task_claims() -> None:

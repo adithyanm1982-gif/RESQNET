@@ -155,7 +155,18 @@ export const api = {
     finally { clearTimeout(t) }
   },
   scenarios: () => req('/api/simulations/scenarios'),
-  create: (scenario_id: string, mode: CoordinationMode = 'centralized') => req('/api/simulations', { method: 'POST', body: JSON.stringify({ scenario_id, mode }) }),
+  create: (
+    scenario_id: string,
+    mode: CoordinationMode = 'centralized',
+    coverage_target_percentage?: number,
+  ) => req('/api/simulations', {
+    method: 'POST',
+    body: JSON.stringify({
+      scenario_id,
+      mode,
+      ...(coverage_target_percentage == null ? {} : { coverage_target_percentage }),
+    }),
+  }),
   tick: (id: string, ticks = 1) => req(`/api/simulations/${id}/ticks`, { method: 'POST', body: JSON.stringify({ ticks }) }),
   state: (id: string) => req(`/api/simulations/${id}`),
   droneConfig: () => req('/api/datasets/drone-config'),

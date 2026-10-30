@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.simulation.engine import (
     CoordinationMode,
+    DEFAULT_COVERAGE_TARGET_PERCENTAGE,
     MAX_TICKS_PER_ADVANCE,
     FailureScheduleConflict,
     SimulationEngine,
@@ -30,6 +31,11 @@ MAX_CUSTOM_FAILURE_BODY_BYTES = 65_536
 class CreateSimulationRequest(BaseModel):
     scenario_id: str = Field(min_length=1)
     mode: CoordinationMode = CoordinationMode.CENTRALIZED
+    coverage_target_percentage: float = Field(
+        default=DEFAULT_COVERAGE_TARGET_PERCENTAGE,
+        ge=1,
+        le=100,
+    )
 
 
 class AdvanceTicksRequest(BaseModel):
@@ -198,7 +204,12 @@ def create_simulation(request: CreateSimulationRequest) -> dict[str, Any]:
             detail="Scenario not found.",
         )
     return runs.create(
-        SimulationEngine(scenario, coordination_mode=request.mode)
+        SimulationEngine(
+            scenario,
+            coordination_mode=request.mode,
+            coverage_target_percentage=request.coverage_target_percentage,
+            mission_duration_ticks=loader.mission_duration_ticks,
+        )
     )
 
 

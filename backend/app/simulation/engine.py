@@ -6,6 +6,7 @@ from itertools import combinations, permutations
 from uuid import uuid4
 
 from app.simulation.loader import (
+    DEFAULT_MISSION_DURATION_TICKS,
     CustomFailureScheduleDefinition,
     FailureScenarioDefinition,
     ScenarioDefinition,
@@ -14,6 +15,7 @@ from app.simulation.loader import (
 
 MAX_TICKS_PER_ADVANCE = 1000
 NEIGHBOR_OFFSETS = ((1, 0), (0, 1), (-1, 0), (0, -1))
+DEFAULT_COVERAGE_TARGET_PERCENTAGE = 90.0
 
 
 class CoordinationMode(str, Enum):
@@ -59,8 +61,24 @@ class SimulationEngine:
         self,
         scenario: ScenarioDefinition,
         coordination_mode: CoordinationMode | str = CoordinationMode.CENTRALIZED,
+        coverage_target_percentage: float = DEFAULT_COVERAGE_TARGET_PERCENTAGE,
+        mission_duration_ticks: int = DEFAULT_MISSION_DURATION_TICKS,
     ) -> None:
         self.scenario = scenario
+        if (
+            isinstance(coverage_target_percentage, bool)
+            or not isinstance(coverage_target_percentage, (int, float))
+            or not 1 <= coverage_target_percentage <= 100
+        ):
+            raise ValueError("coverage_target_percentage must be between 1 and 100.")
+        if (
+            isinstance(mission_duration_ticks, bool)
+            or not isinstance(mission_duration_ticks, int)
+            or mission_duration_ticks < 1
+        ):
+            raise ValueError("mission_duration_ticks must be a positive integer.")
+        self.coverage_target_percentage = float(coverage_target_percentage)
+        self.mission_duration_ticks = mission_duration_ticks
         try:
             self.coordination_mode = CoordinationMode(coordination_mode)
         except ValueError:
@@ -116,6 +134,10 @@ class SimulationEngine:
             - len(scenario.blocked_cells)
             - len(scenario.restricted_cells)
         )
+        self._exploration_goals: dict[str, tuple[int, int]] = {}
+        self.mission_complete = False
+        self.mission_completion_reason: str | None = None
+        self.tasks_completed_tick: int | None = None
 
     def is_traversable(self, position: tuple[int, int]) -> bool:
         x, y = position
@@ -133,13 +155,25 @@ class SimulationEngine:
             or not 1 <= ticks <= MAX_TICKS_PER_ADVANCE
         ):
             raise ValueError(f"ticks must be between 1 and {MAX_TICKS_PER_ADVANCE}.")
+        if self.mission_complete:
+            return self.get_state()
         for _ in range(ticks):
+            if self.mission_complete:
+                break
             self._processing_tick = self.tick + 1
             self._reconciliation_this_tick = False
             self._update_failure_events(self._processing_tick)
             self._assign_tasks()
+            self._assign_exploration()
             self._move_drones()
             self.tick += 1
+            if (
+                self.tasks
+                and self.tasks_completed_tick is None
+                and all(task.status == "completed" for task in self.tasks.values())
+            ):
+                self.tasks_completed_tick = self.tick
+            self._update_mission_completion()
         self._processing_tick = self.tick
         return self.get_state()
 
@@ -280,6 +314,7 @@ class SimulationEngine:
             drone = self.drones[drone_id]
             self._unresponsive_drone_ids.add(drone_id)
             drone.status = "disconnected"
+            self._exploration_goals.pop(drone_id, None)
             if self.coordination_mode is CoordinationMode.DECENTRALIZED:
                 self._release_drone_claims(drone_id, "disconnected")
             elif self.coordination_mode is CoordinationMode.HYBRID:
@@ -564,11 +599,19 @@ class SimulationEngine:
             "tasks": task_states,
             "assigned_tasks": assigned_tasks,
             "completed_tasks": completed_task_ids,
+            "tasks_completed_tick": self.tasks_completed_tick,
             "coverage": {
                 "visited_cells": len(self.visited_cells),
                 "traversable_cells": self.traversable_cell_count,
                 "percentage": round(coverage_percent, 2),
             },
+            "mission_status": "completed" if self.mission_complete else "in_progress",
+            "coverage_target_percentage": self.coverage_target_percentage,
+            "mission_duration_ticks": self.mission_duration_ticks,
+            "mission_completion_reason": self.mission_completion_reason,
+            "remaining_reachable_unvisited_cells": (
+                self._remaining_reachable_unvisited_cells()
+            ),
             "candidate_detections": [
                 {
                     "id": candidate.candidate_id,
@@ -583,6 +626,204 @@ class SimulationEngine:
             "failure_events": deepcopy(self._failure_events),
             "failure_test_matrix_entry": deepcopy(self._failure_test_matrix_entry),
         }
+
+    def _assign_exploration(self) -> None:
+        if self.mission_complete or self._coverage_target_reached():
+            self._stop_exploration()
+            return
+
+        reserved_positions = {
+            position
+            for task in self.tasks.values()
+            if task.status in {"assigned", "in_progress", "blocked"}
+            for position in task.work_positions.values()
+        }
+        reserved_positions.update(self._yield_goals.values())
+
+        retained_goals: dict[str, tuple[int, int]] = {}
+        for drone_id, goal in sorted(self._exploration_goals.items()):
+            drone = self.drones.get(drone_id)
+            if (
+                drone is None
+                or drone.task_id is not None
+                or drone.status == "disconnected"
+                or not self.is_traversable(goal)
+                or goal in self.visited_cells
+                or goal in reserved_positions
+            ):
+                continue
+            distances = self._distance_map(
+                goal,
+                blocked_positions=self._blocked_exploration_positions(drone_id),
+            )
+            if (drone.x, drone.y) not in distances:
+                continue
+            if goal in retained_goals.values():
+                continue
+            retained_goals[drone_id] = goal
+            reserved_positions.add(goal)
+        self._exploration_goals = retained_goals
+
+        unvisited = {
+            (x, y)
+            for y in range(self.scenario.height)
+            for x in range(self.scenario.width)
+            if self.is_traversable((x, y))
+            and (x, y) not in self.visited_cells
+        }
+        for drone in sorted(self.drones.values(), key=lambda item: item.drone_id):
+            if (
+                drone.task_id is not None
+                or drone.status == "disconnected"
+                or drone.drone_id in self._yield_goals
+                or drone.drone_id in self._exploration_goals
+            ):
+                continue
+            distances = self._distance_map(
+                (drone.x, drone.y),
+                blocked_positions=self._blocked_exploration_positions(drone.drone_id),
+            )
+            candidates = [
+                position
+                for position in unvisited
+                if position not in reserved_positions and position in distances
+            ]
+            if not candidates:
+                continue
+            goal = min(
+                candidates,
+                key=lambda position: (
+                    distances[position],
+                    position[1],
+                    position[0],
+                ),
+            )
+            self._exploration_goals[drone.drone_id] = goal
+            reserved_positions.add(goal)
+
+    def _coverage_target_reached(self) -> bool:
+        return (
+            self.traversable_cell_count > 0
+            and len(self.visited_cells) / self.traversable_cell_count * 100
+            >= self.coverage_target_percentage
+        )
+
+    def _remaining_reachable_unvisited_cells(self) -> int:
+        reachable: set[tuple[int, int]] = set()
+        for drone in self.drones.values():
+            if drone.status == "disconnected":
+                continue
+            reachable.update(
+                self._distance_map(
+                    (drone.x, drone.y),
+                    blocked_positions=self._blocked_exploration_positions(drone.drone_id),
+                )
+            )
+        return len(reachable - self.visited_cells)
+
+    def _blocked_exploration_positions(self, drone_id: str) -> set[tuple[int, int]]:
+        return {
+            (drone.x, drone.y)
+            for other_id, drone in self.drones.items()
+            if other_id != drone_id
+            and (
+                drone.status in {"disconnected", "searching"}
+                or (
+                    drone.status == "idle"
+                    and other_id not in self._exploration_goals
+                    and other_id not in self._yield_goals
+                )
+            )
+        }
+
+    def _has_actionable_task_work(self) -> bool:
+        unavailable_positions = {
+            (drone.x, drone.y)
+            for drone in self.drones.values()
+            if drone.status == "disconnected"
+        }
+        for task in self.tasks.values():
+            if task.status == "completed":
+                continue
+            active_owners = [
+                self.drones[drone_id]
+                for drone_id in task.assigned_to
+                if drone_id in self.drones
+                and self.drones[drone_id].task_id == task.definition.task_id
+                and self.drones[drone_id].status != "disconnected"
+            ]
+            if active_owners:
+                if all(
+                    self._distance_map(
+                        task.work_positions[drone.drone_id],
+                        blocked_positions=unavailable_positions
+                        - {(drone.x, drone.y)},
+                    ).get((drone.x, drone.y))
+                    is not None
+                    for drone in active_owners
+                ):
+                    return True
+                continue
+
+            required = task.definition.required_drones
+            available = [
+                drone
+                for drone in self.drones.values()
+                if drone.status != "disconnected" and drone.task_id is None
+            ]
+            reserved_positions = {
+                position
+                for other in self.tasks.values()
+                if other is not task
+                and other.status in {"assigned", "in_progress", "blocked"}
+                for position in other.work_positions.values()
+            }
+            if self._select_assignment(
+                task,
+                available,
+                reserved_positions,
+                required_drones=required,
+            ) is not None:
+                return True
+        return False
+
+    def _stop_exploration(self) -> None:
+        self._exploration_goals.clear()
+        for drone in self.drones.values():
+            if drone.task_id is None and drone.status != "disconnected":
+                drone.status = "idle"
+
+    def _update_mission_completion(self) -> None:
+        if self.tick >= self.mission_duration_ticks:
+            self._stop_exploration()
+            self.mission_complete = True
+            self.mission_completion_reason = "mission_duration_reached"
+            return
+
+        target_reached = self._coverage_target_reached()
+        remaining = self._remaining_reachable_unvisited_cells()
+        if target_reached or remaining == 0:
+            self._stop_exploration()
+            pending_coordination_failures = any(
+                event.get("type") in {"controller_outage", "network_partition"}
+                and event.get("status")
+                in {
+                    self._failure_status_values.get("scheduled"),
+                    self._failure_status_values.get("active"),
+                    self._failure_status_values.get("recovering"),
+                }
+                for event in self._failure_events
+            )
+            if (
+                not pending_coordination_failures
+                and not self._has_actionable_task_work()
+            ):
+                self.mission_complete = True
+                self.mission_completion_reason = (
+                    "coverage_target_reached"
+                    if target_reached
+                    else "no_reachable_unvisited_cells"
+                )
 
     def _assign_tasks(self) -> None:
         if self.coordination_mode is CoordinationMode.DECENTRALIZED:
@@ -1175,6 +1416,7 @@ class SimulationEngine:
             for drone in drones
             if drone.task_id is not None
         }
+        goals.update(self._exploration_goals)
         goals.update(self._yield_goals)
         occupied_positions = {
             (drone.x, drone.y)
@@ -1215,7 +1457,16 @@ class SimulationEngine:
                 and position == self._yield_goals[drone.drone_id]
             ):
                 del self._yield_goals[drone.drone_id]
+            exploration_goal = self._exploration_goals.get(drone.drone_id)
+            if exploration_goal is not None and position == exploration_goal:
+                del self._exploration_goals[drone.drone_id]
             if drone.task_id is None:
+                if drone.status != "disconnected":
+                    drone.status = (
+                        "exploring"
+                        if drone.drone_id in self._exploration_goals
+                        else "idle"
+                    )
                 continue
             if drone.status == "disconnected":
                 continue
@@ -1291,6 +1542,7 @@ class SimulationEngine:
             drone = self.drones[drone_id]
             if (
                 drone.task_id is not None
+                or drone.status == "disconnected"
                 or (drone.x, drone.y) == self._yield_goals[drone_id]
             ):
                 del self._yield_goals[drone_id]
@@ -1305,19 +1557,25 @@ class SimulationEngine:
             if task.status in {"assigned", "in_progress", "blocked"}
             for position in task.work_positions.values()
         }
+        reserved.update(self._exploration_goals.values())
         reserved.update(self._yield_goals.values())
         active_drones = sorted(
             (
                 drone
                 for drone in self.drones.values()
                 if drone.task_id is not None
+                or drone.drone_id in self._exploration_goals
             ),
             key=lambda drone: drone.drone_id,
         )
         yielding_drones = set(self._yield_goals)
 
         for active in active_drones:
-            goal = self.tasks[active.task_id].work_positions[active.drone_id]
+            goal = (
+                self.tasks[active.task_id].work_positions[active.drone_id]
+                if active.task_id is not None
+                else self._exploration_goals[active.drone_id]
+            )
             current = (active.x, active.y)
             if self._route_is_open(active, goal, occupied):
                 continue
@@ -1330,6 +1588,7 @@ class SimulationEngine:
                     drone
                     for drone in self.drones.values()
                     if drone.task_id is None
+                    and drone.status != "disconnected"
                     and drone.drone_id not in yielding_drones
                     and (drone.x, drone.y) in route_cells
                 ),

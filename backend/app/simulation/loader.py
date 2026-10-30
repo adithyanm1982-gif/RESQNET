@@ -10,6 +10,7 @@ DATA_FILES = (
     "failure_scenarios.json",
 )
 VALID_GRID_CELLS = {".", "#", "X"}
+DEFAULT_MISSION_DURATION_TICKS = 300
 
 
 class DatasetError(ValueError):
@@ -93,11 +94,28 @@ class CustomFailureScheduleDefinition:
 class ScenarioLoader:
     def __init__(self, data_dir: Path = PROJECT_ROOT) -> None:
         self.data_dir = Path(data_dir)
+        self.mission_duration_ticks = DEFAULT_MISSION_DURATION_TICKS
 
     def load_all(self) -> tuple[ScenarioDefinition, ...]:
         disaster_data = self._read_json("disaster_scenarios.json")
         drone_data = self._read_json("drone_config.json")
         failure_data = self._read_json("failure_scenarios.json")
+
+        failure_meta = failure_data.get("meta")
+        units = failure_meta.get("units") if isinstance(failure_meta, dict) else None
+        tick_s = units.get("tick_s") if isinstance(units, dict) else None
+        mission_duration_s = (
+            units.get("mission_duration_s") if isinstance(units, dict) else None
+        )
+        if (
+            not self._is_positive_int(tick_s)
+            or not self._is_positive_int(mission_duration_s)
+            or mission_duration_s % tick_s
+        ):
+            raise DatasetError(
+                "Failure dataset mission duration and tick duration are invalid."
+            )
+        self.mission_duration_ticks = mission_duration_s // tick_s
 
         scenarios = disaster_data.get("scenarios")
         fleets = drone_data.get("fleets")

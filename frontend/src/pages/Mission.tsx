@@ -20,13 +20,20 @@ export default function Mission() {
     const id = setInterval(() => useStore.getState().step(), s.speedMs)
     return () => clearInterval(id)
   }, [s.running, s.speedMs])
-  useEffect(() => { if (run && !s.archived && run.tasks.length && run.tasks.every((t: any) => t.status === 'completed') && s.running) { s.setRunning(false); s.saveRun() } }, [run])
+  useEffect(() => {
+    if (run?.mission_status === 'completed' && !s.archived) {
+      if (s.running) s.setRunning(false)
+      s.saveRun()
+    }
+  }, [run?.mission_status])
 
   const ctl = (
     <div className="tb-c glass">
       {!run ? <button className="primary sm" disabled={!s.scenarioId || s.busy} onClick={s.start}>▶ Start</button> : <>
-        <button className="primary sm" disabled={s.archived} onClick={() => s.setRunning(!s.running)}>{s.running ? '❚❚ Pause' : '▶ Resume'}</button>
-        <button className="sm" disabled={s.running || s.busy || s.archived} onClick={() => s.step()}>Step</button>
+        {run.mission_status === 'completed'
+          ? <button className="primary sm" disabled>✓ Mission complete</button>
+          : <button className="primary sm" disabled={s.archived} onClick={() => s.setRunning(!s.running)}>{s.running ? '❚❚ Pause' : '▶ Resume'}</button>}
+        <button className="sm" disabled={s.running || s.busy || s.archived || run.mission_status === 'completed'} onClick={() => s.step()}>Step</button>
         <button className="sm" disabled={s.busy} onClick={s.start}>↻ Restart</button>
         <button className="sm danger" onClick={s.reset}>■ Reset</button></>}
       <span className="mono mut" style={{ fontSize: 11 }}>{(run?.coordination_mode ?? s.mode).toUpperCase()}{run ? ` · ${mmss(run.tick * s.secPerTick)}` : ''}</span>
@@ -67,6 +74,24 @@ export default function Mission() {
     reconciliation: 'Reconciliation',
   }
   const inProg = run.tasks.filter((t: any) => t.status !== 'completed' && t.status !== 'pending' && t.status !== 'blocked').length
+  const exploring = run.drones.some((d: any) => d.status === 'exploring')
+  const missionLabel = run.mission_status === 'completed'
+    ? run.mission_completion_reason === 'mission_duration_reached'
+      ? 'Mission duration limit reached'
+      : run.mission_completion_reason === 'no_reachable_unvisited_cells'
+        ? 'Mission complete · no safe reachable exploration'
+        : 'Mission complete · coverage objective reached'
+    : run.coverage.percentage >= (run.coverage_target_percentage ?? 90)
+      ? 'Coverage objective reached · resolving remaining work'
+      : done === total && total > 0
+        ? 'Area exploration in progress'
+        : exploring
+          ? 'Tasks and area exploration in progress'
+          : 'Task execution in progress'
+  const coverageProgress = Math.min(
+    100,
+    run.coverage.percentage / (run.coverage_target_percentage || 90) * 100,
+  )
 
   return (
     <div className="mc">
@@ -116,8 +141,16 @@ export default function Mission() {
             })}
           </div></div>
         <div className="card"><h3>Mission status</h3>
-          <div className="mono" style={{ lineHeight: 1.7, fontSize: 12 }}>Elapsed {mmss(run.tick * s.secPerTick)} · Remaining tasks {total - done}<br />Coverage {run.coverage.percentage}% ({run.coverage.visited_cells}/{run.coverage.traversable_cells})</div>
+          <div className="mono" style={{ lineHeight: 1.7, fontSize: 12 }}>
+            {missionLabel}<br />
+            Elapsed {mmss(run.tick * s.secPerTick)} · Tick {run.tick}/{run.mission_duration_ticks ?? '—'} · Tasks complete {done}/{total}<br />
+            Coverage {run.coverage.percentage}% / {run.coverage_target_percentage ?? 90}% target ({run.coverage.visited_cells}/{run.coverage.traversable_cells} cells)<br />
+            Reachable unexplored cells {run.remaining_reachable_unvisited_cells ?? '—'}
+          </div>
           <div className="meter"><i style={{ width: `${total ? (done / total) * 100 : 0}%`, background: 'var(--cy)' }} /></div>
+          <div className="mut mono" style={{ fontSize: 10, marginTop: 4 }}>TASK COMPLETION</div>
+          <div className="meter"><i style={{ width: `${coverageProgress}%`, background: 'var(--teal)' }} /></div>
+          <div className="mut mono" style={{ fontSize: 10, marginTop: 4 }}>AREA COVERAGE</div>
           <div style={{ marginTop: 6 }}>{topTasks.map((t: any) => { const st = t.status === 'completed' ? '' : t.status === 'blocked' ? 'blocked' : t.status === 'pending' ? 'pending' : 'active'
             return <div className="ms" key={t.task_id}><span className={'ck ' + st}>{st === '' ? '✓' : st === 'blocked' ? '!' : st === 'pending' ? '…' : '▶'}</span><div><small>{t.task_id} · P{t.priority}</small><span className="mut" style={{ fontSize: 11 }}>{t.status} · {(t.assigned_to || []).join(', ') || 'unassigned'}</span></div></div> })}</div>
           {(run.candidate_detections || []).length > 0 && <p className="mut" style={{ fontSize: 11 }}>Unverified candidates: {(run.candidate_detections || []).filter((c: any) => c.verification_status !== 'confirmed').length} (observations, not confirmed rescues)</p>}

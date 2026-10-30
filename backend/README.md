@@ -5,6 +5,21 @@ health endpoint and the initial scenario and simulation-run table definitions.
 The initial deterministic, tick-based grid simulation uses the scenario and
 drone configuration JSON files in the repository root.
 
+Each simulation prioritizes assigned tasks, then sends available, connected
+drones to distinct nearest reachable unvisited traversable cells. Exploration
+does not replace or interrupt task assignments, and targets are replanned when
+they become visited or inaccessible. A run completes after its tasks have no
+actionable work and it reaches its coverage objective or exhausts reachable
+unvisited cells. The default objective is 90% coverage; API clients may set
+`coverage_target_percentage` from 1 to 100 when creating a simulation. Coverage
+counts only unique visited traversable cells; blocked and restricted cells are
+excluded. `mission_status`, `mission_completion_reason`, and
+`remaining_reachable_unvisited_cells` distinguish mission progress from task
+completion in simulation responses; `tasks_completed_tick` records the exact
+tick when all tasks finish. The configured mission-duration limit is also
+enforced: the current failure dataset specifies 600 seconds with 2-second ticks
+(300 ticks).
+
 ## Windows PowerShell setup
 
 Run these commands from the repository's `backend` directory:

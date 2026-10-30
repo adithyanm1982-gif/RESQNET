@@ -219,6 +219,7 @@ def test_hybrid_controller_outage_fallback_and_recovery_timing(scenarios) -> Non
         recovered = engine.advance()
     assert recovered["failure_events"][0]["status"] == "resolved"
     assert recovered["operational_strategy"] == "centralized_allocation"
+    assert recovered["mission_status"] == "completed"
 
 
 def test_hybrid_partition_claims_are_local_then_reconciled_idempotently() -> None:
@@ -622,7 +623,10 @@ def test_decentralized_real_scenario_progress_is_deterministic(scenarios) -> Non
     for expected_tick in range(1, 101):
         first_state = first.advance()
         second_state = second.advance()
-        assert first_state["tick"] == expected_tick
+        assert first_state["tick"] == expected_tick or (
+            first_state["mission_status"] == "completed"
+            and first_state["tick"] == expected_tick - 1
+        )
         assert first_state["coordination_mode"] == "decentralized"
         assert all("claim_status" in task and "claims" in task for task in first_state["tasks"])
         for task in first_state["tasks"]:
@@ -634,6 +638,8 @@ def test_decentralized_real_scenario_progress_is_deterministic(scenarios) -> Non
         first_comparable = {key: value for key, value in first_state.items() if key != "run_id"}
         second_comparable = {key: value for key, value in second_state.items() if key != "run_id"}
         assert first_comparable == second_comparable
+        if first_state["mission_status"] == "completed":
+            break
 
     assert first_state["completed_tasks"]
 
@@ -658,10 +664,234 @@ def test_coverage_counts_only_traversable_visited_cells() -> None:
 
     state = engine.advance()
 
-    assert state["coverage"]["visited_cells"] == initial_coverage["visited_cells"] + 1
+    assert state["coverage"]["visited_cells"] > initial_coverage["visited_cells"]
     assert state["coverage"]["traversable_cells"] == 8
     assert (2, 0) not in engine.visited_cells
-    assert state["coverage"]["percentage"] == pytest.approx(7 / 8 * 100, abs=0.01)
+    assert state["coverage"]["percentage"] == pytest.approx(
+        len(engine.visited_cells) / 8 * 100,
+        abs=0.01,
+    )
+
+
+def test_idle_drones_explore_and_coverage_grows_after_tasks_finish() -> None:
+    drones = (
+        _drone("D1", 0, 0),
+        _drone("D2", 0, 1),
+        _drone("D3", 0, 2),
+        _drone("D4", 1, 2),
+        _drone("D5", 2, 2),
+        _drone("D6", 2, 1),
+    )
+    scenario = _small_scenario(
+        grid=tuple("............" for _ in range(5)),
+        blocked=frozenset(),
+        drones=drones,
+        task_position=(1, 0),
+    )
+    engine = SimulationEngine(scenario)
+
+    task_state = engine.advance()
+    assert task_state["completed_tasks"] == ["T1"]
+    coverage_after_tasks = task_state["coverage"]["visited_cells"]
+
+    state = task_state
+    for _ in range(5):
+        state = engine.advance()
+
+    assert state["completed_tasks"] == ["T1"]
+    assert state["coverage"]["visited_cells"] > coverage_after_tasks
+    assert state["mission_status"] == "in_progress"
+    assert state["remaining_reachable_unvisited_cells"] > 0
+
+
+def test_exploration_stops_at_configured_coverage_target() -> None:
+    drones = (
+        _drone("D1", 0, 0),
+        _drone("D2", 0, 1),
+        _drone("D3", 0, 2),
+        _drone("D4", 1, 2),
+        _drone("D5", 2, 2),
+        _drone("D6", 2, 1),
+    )
+    scenario = _small_scenario(
+        grid=tuple("........" for _ in range(3)),
+        blocked=frozenset(),
+        drones=drones,
+        task_position=(1, 0),
+        tasks=(),
+    )
+    engine = SimulationEngine(scenario, coverage_target_percentage=50)
+
+    for _ in range(10):
+        state = engine.advance()
+        if state["mission_status"] == "completed":
+            break
+
+    assert state["mission_status"] == "completed"
+    assert state["mission_completion_reason"] == "coverage_target_reached"
+    assert state["coverage"]["percentage"] >= 50
+    completed_tick = state["tick"]
+    assert engine.advance()["tick"] == completed_tick
+
+
+def test_mission_completes_at_configured_duration_limit() -> None:
+    scenario = _small_scenario(
+        grid=tuple("............" for _ in range(5)),
+        blocked=frozenset(),
+        drones=(
+            _drone("D1", 0, 0),
+            _drone("D2", 0, 1),
+            _drone("D3", 0, 2),
+            _drone("D4", 1, 2),
+            _drone("D5", 2, 2),
+            _drone("D6", 2, 1),
+        ),
+        task_position=(1, 0),
+        tasks=(),
+    )
+    engine = SimulationEngine(
+        scenario,
+        coverage_target_percentage=100,
+        mission_duration_ticks=2,
+    )
+
+    state = engine.advance(10)
+
+    assert state["tick"] == 2
+    assert state["mission_status"] == "completed"
+    assert state["mission_completion_reason"] == "mission_duration_reached"
+
+
+def test_exploration_completes_when_no_reachable_unvisited_cells_remain() -> None:
+    rows = ("...#...", "...#...", "...#...")
+    drones = (
+        _drone("D1", 0, 0),
+        _drone("D2", 0, 2),
+        _drone("D3", 1, 2),
+        _drone("D4", 2, 2),
+        _drone("D5", 1, 1),
+        _drone("D6", 2, 1),
+    )
+    scenario = _small_scenario(
+        grid=rows,
+        blocked=frozenset((3, y) for y in range(3)),
+        drones=drones,
+        task_position=(0, 0),
+        tasks=(),
+    )
+    engine = SimulationEngine(scenario)
+
+    for _ in range(20):
+        state = engine.advance()
+        if state["mission_status"] == "completed":
+            break
+
+    assert state["mission_status"] == "completed"
+    assert state["mission_completion_reason"] == "no_reachable_unvisited_cells"
+    assert state["remaining_reachable_unvisited_cells"] == 0
+    assert state["coverage"]["percentage"] < 90
+
+
+@pytest.mark.parametrize("mode", list(CoordinationMode))
+def test_exploration_is_deterministic_and_safe_in_every_coordination_mode(mode) -> None:
+    scenario = _small_scenario(
+        grid=("...#..", "...X..", "......"),
+        blocked=frozenset({(3, 0)}),
+        restricted=frozenset({(3, 1)}),
+        drones=(
+            _drone("D1", 0, 0),
+            _drone("D2", 0, 2),
+            _drone("D3", 1, 2),
+            _drone("D4", 2, 2),
+            _drone("D5", 1, 1),
+            _drone("D6", 2, 1),
+        ),
+        task_position=(0, 0),
+        tasks=(),
+    )
+    first = SimulationEngine(scenario, mode)
+    replay = SimulationEngine(scenario, mode)
+
+    for _ in range(20):
+        first_state = first.advance()
+        replay_state = replay.advance()
+        assert {
+            key: value for key, value in first_state.items() if key != "run_id"
+        } == {
+            key: value for key, value in replay_state.items() if key != "run_id"
+        }
+        positions = [(drone["x"], drone["y"]) for drone in first_state["drones"]]
+        assert len(positions) == len(set(positions))
+        assert all(first.is_traversable(position) for position in positions)
+        assert not first.visited_cells.intersection(first.scenario.blocked_cells)
+        assert not first.visited_cells.intersection(first.scenario.restricted_cells)
+        if first_state["mission_status"] == "completed":
+            break
+
+    assert first_state["mission_status"] == "completed"
+
+
+@pytest.mark.parametrize("failure_type", ["controller_outage", "network_partition"])
+def test_exploration_continues_through_hybrid_failures_and_reconciliation(
+    scenarios,
+    failure_type,
+) -> None:
+    scenario = next(item for item in scenarios if item.scenario_id == "earthquake")
+    event = {
+        "type": failure_type,
+        "start_tick": 2,
+        "restore_tick": 4,
+        "reconnection": {
+            "detect_timeout_ticks": 1,
+            "reconnect_delay_ticks": 1,
+            "resync_time_ticks": 1,
+        },
+    }
+    if failure_type == "network_partition":
+        event["groups"] = [
+            {"group_id": "controller", "drone_ids": ["D1", "D2", "D3"], "has_controller_link": True},
+            {"group_id": "local", "drone_ids": ["D4", "D5", "D6"], "has_controller_link": False},
+        ]
+    schedule = ScenarioLoader(DATA_DIR).load_custom_failure_schedule(
+        scenario.scenario_id,
+        [event],
+    )
+    engine = SimulationEngine(scenario, CoordinationMode.HYBRID)
+    initial_visited = len(engine.visited_cells)
+    engine.install_custom_failure_schedule(schedule)
+
+    for _ in range(12):
+        state = engine.advance()
+        positions = [(drone["x"], drone["y"]) for drone in state["drones"]]
+        assert len(positions) == len(set(positions))
+        assert all(engine.is_traversable(position) for position in positions)
+        assert len(engine._exploration_goals.values()) == len(set(engine._exploration_goals.values()))
+
+    assert state["failure_events"][0]["status"] == "resolved"
+    assert state["reconciliation_history"]
+    assert len(engine.visited_cells) > initial_visited
+
+
+def test_disconnected_drone_does_not_keep_an_exploration_goal(scenarios) -> None:
+    scenario = next(item for item in scenarios if item.scenario_id == "earthquake")
+    schedule = ScenarioLoader(DATA_DIR).load_custom_failure_schedule(
+        scenario.scenario_id,
+        [{
+            "type": "drone_unresponsive",
+            "start_tick": 2,
+            "restore_tick": None,
+            "drone_id": "D3",
+        }],
+    )
+    engine = SimulationEngine(scenario, CoordinationMode.DECENTRALIZED)
+    engine.install_custom_failure_schedule(schedule)
+
+    state = engine.advance(3)
+
+    disconnected = next(drone for drone in state["drones"] if drone["drone_id"] == "D3")
+    assert disconnected["status"] == "disconnected"
+    assert "D3" not in engine._exploration_goals
+    assert len(engine._exploration_goals.values()) == len(set(engine._exploration_goals.values()))
 
 
 def test_task_is_completed_when_assigned_drones_reach_target() -> None:
@@ -684,6 +914,7 @@ def test_task_is_completed_when_assigned_drones_reach_target() -> None:
 
     assert state["completed_tasks"] == ["T1"]
     assert state["tasks"][0]["status"] == "completed"
+    assert state["tasks_completed_tick"] == 1
     assert state["drones"][0]["status"] == "idle"
 
 

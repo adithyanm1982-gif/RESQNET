@@ -22,7 +22,7 @@ export default function Experiments() {
   const sc = scenarios.find((x: any) => x.scenario_id === scenarioId)
   const best = (k: string, hi: boolean) => { const vals = comparison.map((r: any) => r[k]).filter((x: any) => typeof x === 'number'); return vals.length ? (hi ? Math.max(...vals) : Math.min(...vals)) : null }
   const cls = (r: any, k: string, hi: boolean) => (best(k, hi) != null && r[k] === best(k, hi) ? 'best-c' : '')
-  const rowsCsv = () => toCsv([['mode', 'run_id', 'coverage', 'completed', 'total_tasks', 'blocked', 'recovery', 'duplicates', 'comm_overhead', 'safety_violations', 'finished_tick', 'injection'], ...comparison.map((r: any) => [r.mode, r.run_id, r.coverage, r.completed, r.total_tasks, r.blocked, r.recovery, r.duplicates, r.comm, r.safety, r.finished, r.injection])])
+  const rowsCsv = () => toCsv([['mode', 'run_id', 'coverage', 'completed', 'total_tasks', 'blocked', 'recovery', 'duplicates', 'comm_overhead', 'safety_violations', 'mission_finished_tick', 'tasks_finished_tick', 'injection'], ...comparison.map((r: any) => [r.mode, r.run_id, r.coverage, r.completed, r.total_tasks, r.blocked, r.recovery, r.duplicates, r.comm, r.safety, r.finished, r.tasksFinished, r.injection])])
   return (
     <div className="page">
       <div><h1>Compare <b>strategies</b></h1><p className="sub">Centralized-only vs decentralized-only vs Hybrid RESQNET — same scenario, tick budget and failure condition.</p></div>
@@ -35,7 +35,8 @@ export default function Experiments() {
       {error && <div className="err">{error}</div>}
       {!!comparison.length && <>
         <div className="grid3">{comparison.map((r: any) => <div key={r.mode} className={'card cmpcard ' + (r.mode === 'hybrid' ? 'best' : '')}>
-          <h3>{NAME[r.mode]}<span className="grow" />{r.finished != null && <span className="badge">finished @ {r.finished}</span>}</h3>
+          <h3>{NAME[r.mode]}<span className="grow" />{r.finished != null && <span className="badge">mission @ {r.finished}</span>}</h3>
+          {r.tasksFinished != null && <div className="mut mono" style={{ fontSize: 11 }}>All tasks complete @ {r.tasksFinished}</div>}
           <div className="kpis" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
             <div className="kpi"><span className="v c-c">{r.coverage}%</span><span className="l">Coverage</span></div><div className="kpi"><span className="v c-g">{r.completed}/{r.total_tasks}</span><span className="l">Tasks</span></div>
             <div className="kpi"><span className={'v ' + (r.recovery === 'NOT RECOVERED' ? 'c-r' : '')} style={{ fontSize: 17 }}>{r.recovery}</span><span className="l">Recovery</span></div><div className="kpi"><span className="v c-a">{v(r.duplicates)}</span><span className="l">Duplicates</span></div></div>

@@ -207,13 +207,16 @@ export const useStore = create<S>((set, get) => ({
           r = await api.installCustomFailurePlan(id, customPlan)
           injection = `custom plan (${customPlan.length} events) installed`
         }
-        let o = observe(emptyObs(), r); let finished: number | null = null
-        while (r.tick < ticks) {
+        let o = observe(emptyObs(), r)
+        let finished: number | null = r.mission_status === 'completed' ? r.tick : null
+        let tasksFinished: number | null = r.tasks_completed_tick ?? null
+        while (r.tick < ticks && r.mission_status !== 'completed') {
           set({ cmpProgress: `${m}: tick ${r.tick}/${ticks}` })
           r = await api.tick(id, Math.min(chunk, ticks - r.tick)); o = observe(o, r)
-          if (r.tasks.length && r.tasks.every((t: any) => t.status === 'completed')) { finished = r.tick; break }
+          if (tasksFinished == null && r.tasks_completed_tick != null) tasksFinished = r.tasks_completed_tick
+          if (r.mission_status === 'completed') finished = r.tick
         }
-        rows.push({ ...summary(r, m, o, { injection, finished }) }); set({ comparison: [...rows] })
+        rows.push({ ...summary(r, m, o, { injection, finished, tasksFinished }) }); set({ comparison: [...rows] })
       }
       set({ busy: false, cmpProgress: '' })
     } catch (e: any) { set({ busy: false, error: e.message, cmpProgress: '' }) }
